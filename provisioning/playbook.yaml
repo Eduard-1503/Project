@@ -1,0 +1,152 @@
+---
+- hosts: All
+  become: true
+  tasks:
+
+  - name: copy timezone
+    ansible.builtin.copy:
+      src: /usr/share/zoneinfo/Europe/Moscow
+      dest: /etc/localtime
+      owner: root
+
+  - name: restart chronyd
+    ansible.builtin.systemd:
+      name: chronyd
+      state: restarted
+      enabled: yes
+
+- hosts: Routers
+  become: true
+  tasks:
+
+  - name: set up forward packages across routers
+    ansible.posix.sysctl:
+      name: net.ipv4.conf.all.forwarding
+      value: '1'
+      state: present
+
+- hosts: Servers
+  become: true
+  tasks:
+
+  - name: del default gateway
+    ansible.builtin.lineinfile:
+      dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+      line: DEFROUTE=no
+
+  - name: add default gateway
+    ansible.builtin.lineinfile:
+      dest: /etc/sysconfig/network-scripts/ifcfg-eth1
+      line: DEFROUTE=yes
+
+- hosts: Routers-int
+  become: true
+  tasks:
+
+  - name: del default gateway
+    ansible.builtin.lineinfile:
+      dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+      line: DEFROUTE=no
+
+  - name: add default gateway
+    ansible.builtin.lineinfile:
+      dest: /etc/sysconfig/network-scripts/ifcfg-eth1
+      line: DEFROUTE=yes
+
+- hosts: Inet
+  become: true
+  tasks:
+
+  - name: install packages
+    ansible.builtin.yum:
+      name: "{{ packages }}"
+      state: present
+    vars:
+      packages:
+      - iptables
+      - iptables-services
+
+  - name: set up iptables
+    ansible.builtin.copy:
+      src: ./files/ipt-ri.txt
+      dest: /etc/sysconfig/iptables
+      owner: root
+      group: root
+      mode: 0600
+
+  - name: restart iptables
+    ansible.builtin.systemd:
+      name: iptables
+      state: restarted
+      enabled: true
+
+  - name: add route to 192.168.0.0/22, 192.168.255.4/30, 192.168.255.8/30
+    ansible.builtin.shell:
+      cmd: touch /etc/sysconfig/network-scripts/route-eth1 && echo "192.168.0.0/22 via 192.168.255.2" > /etc/sysconfig/network-scripts/route-eth1 && echo "192.168.255.4/30 via 192.168.255.2" >> /etc/sysconfig/network-scripts/route-eth1 && echo "192.168.255.8/30 via 192.168.255.2" >> /etc/sysconfig/network-scripts/route-eth1
+
+- hosts: Router-cent
+  become: true
+  tasks:
+
+  - name: add route to 0.0.0.0/0
+    ansible.builtin.shell:
+      cmd: touch /etc/sysconfig/network-scripts/route-eth1 && echo "0.0.0.0/0 via 192.168.255.1" > /etc/sysconfig/network-scripts/route-eth1
+
+  - name: add route to 192.168.1.0/24
+    ansible.builtin.shell:
+      cmd: touch /etc/sysconfig/network-scripts/route-eth6 && echo "192.168.1.0/24 via 192.168.255.6" > /etc/sysconfig/network-scripts/route-eth6
+
+  - name: add route to 192.168.2.0/24
+    ansible.builtin.shell:
+      cmd: touch /etc/sysconfig/network-scripts/route-eth5 && echo "192.168.2.0/24 via 192.168.255.10" > /etc/sysconfig/network-scripts/route-eth5
+
+- hosts: Router-1
+  become: true
+  tasks:
+
+  - name: add route to 0.0.0.0/0
+    ansible.builtin.shell:
+      cmd: touch /etc/sysconfig/network-scripts/route-eth1 && echo "0.0.0.0/0 via 192.168.255.9" > /etc/sysconfig/network-scripts/route-eth1
+
+- hosts: Router-2
+  become: true
+  tasks:
+
+  - name: add route to 0.0.0.0/0
+    ansible.builtin.shell:
+      cmd: touch /etc/sysconfig/network-scripts/route-eth1 && echo "0.0.0.0/0 via 192.168.255.5" > /etc/sysconfig/network-scripts/route-eth1
+
+- hosts: Server-cent
+  become: true
+  tasks:
+
+  - name: add default gateway for central server
+    lineinfile:
+      dest: /etc/sysconfig/network-scripts/ifcfg-eth1
+      line: GATEWAY=192.168.0.1
+
+- hosts: Server-1
+  become: true
+  tasks:
+
+  - name: add default gateway for central server
+    lineinfile:
+      dest: /etc/sysconfig/network-scripts/ifcfg-eth1
+      line: GATEWAY=192.168.2.129
+
+- hosts: Server-2
+  become: true
+  tasks:
+
+  - name: add default gateway for central server
+    lineinfile:
+      dest: /etc/sysconfig/network-scripts/ifcfg-eth1
+      line: GATEWAY=192.168.1.1
+
+- hosts: All
+  become: true
+  tasks:
+
+  - name: Reboot the servers
+    ansible.builtin.reboot:
+      msg: "Reboot initiated by Ansible" 
