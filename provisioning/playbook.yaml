@@ -1,6 +1,6 @@
 ---
-- hosts: All
-  become: true
+- hosts: all
+  become: yes
   tasks:
 
   - name: copy timezone
@@ -15,138 +15,86 @@
       state: restarted
       enabled: yes
 
-- hosts: Routers
-  become: true
-  tasks:
-
-  - name: set up forward packages across routers
-    ansible.posix.sysctl:
-      name: net.ipv4.conf.all.forwarding
-      value: '1'
-      state: present
-
-- hosts: Servers
-  become: true
-  tasks:
-
-  - name: del default gateway
-    ansible.builtin.lineinfile:
-      dest: /etc/sysconfig/network-scripts/ifcfg-eth0
-      line: DEFROUTE=no
-
-  - name: add default gateway
-    ansible.builtin.lineinfile:
-      dest: /etc/sysconfig/network-scripts/ifcfg-eth1
-      line: DEFROUTE=yes
-
-- hosts: Routers-int
-  become: true
-  tasks:
-
-  - name: del default gateway
-    ansible.builtin.lineinfile:
-      dest: /etc/sysconfig/network-scripts/ifcfg-eth0
-      line: DEFROUTE=no
-
-  - name: add default gateway
-    ansible.builtin.lineinfile:
-      dest: /etc/sysconfig/network-scripts/ifcfg-eth1
-      line: DEFROUTE=yes
-
-- hosts: Inet
-  become: true
-  tasks:
+  - name: update the rpm
+    ansible.builtin.dnf:
+      name:
+        - rpm
+      state: latest
+      update_only: yes
 
   - name: install packages
-    ansible.builtin.yum:
-      name: "{{ packages }}"
-      state: present
-    vars:
-      packages:
-      - iptables
-      - iptables-services
+    ansible.builtin.yum: name={{ item }} state=latest
+    with_items:
+      - traceroute
+      - tcpdump
+      - net-tools
+      - nano
+      - mc
 
-  - name: set up iptables
-    ansible.builtin.copy:
-      src: ./files/ipt-ri.txt
-      dest: /etc/sysconfig/iptables
+- hosts: Servers
+  become: yes
+  tasks:
+
+  - name: create ifcfg-vlan1
+    ansible.builtin.template:
+      src: ./files/ifcfg-vlan.j2
+      dest: /etc/sysconfig/network-scripts/ifcfg-vlan1
       owner: root
       group: root
-      mode: 0600
+      mode: 0644
 
-  - name: restart iptables
+  - name: restarted NetworkManager service
     ansible.builtin.systemd:
-      name: iptables
+      name: NetworkManager
       state: restarted
-      enabled: true
+      enabled: yes
 
-  - name: add route to 192.168.0.0/22, 192.168.255.4/30, 192.168.255.8/30
-    ansible.builtin.shell:
-      cmd: touch /etc/sysconfig/network-scripts/route-eth1 && echo "192.168.0.0/22 via 192.168.255.2" > /etc/sysconfig/network-scripts/route-eth1 && echo "192.168.255.4/30 via 192.168.255.2" >> /etc/sysconfig/network-scripts/route-eth1 && echo "192.168.255.8/30 via 192.168.255.2" >> /etc/sysconfig/network-scripts/route-eth1
-
-- hosts: Router-cent
-  become: true
+- hosts: Clients
+  become: yes
   tasks:
 
-  - name: add route to 0.0.0.0/0
-    ansible.builtin.shell:
-      cmd: touch /etc/sysconfig/network-scripts/route-eth1 && echo "0.0.0.0/0 via 192.168.255.1" > /etc/sysconfig/network-scripts/route-eth1
+  - name: create ifcfg-vlan1
+    ansible.builtin.template:
+      src: ./files/ifcfg-vlan.j2
+      dest: /etc/sysconfig/network-scripts/ifcfg-vlan1
+      owner: root
+      group: root
+      mode: 0644
 
-  - name: add route to 192.168.1.0/24
-    ansible.builtin.shell:
-      cmd: touch /etc/sysconfig/network-scripts/route-eth6 && echo "192.168.1.0/24 via 192.168.255.6" > /etc/sysconfig/network-scripts/route-eth6
+  - name: restarted NetworkManager service
+    ansible.builtin.systemd:
+      name: NetworkManager
+      state: restarted
+      enabled: yes
 
-  - name: add route to 192.168.2.0/24
-    ansible.builtin.shell:
-      cmd: touch /etc/sysconfig/network-scripts/route-eth5 && echo "192.168.2.0/24 via 192.168.255.10" > /etc/sysconfig/network-scripts/route-eth5
-
-- hosts: Router-1
-  become: true
+- hosts: inetRouter,centralRouter
+  become: yes
   tasks:
 
-  - name: add route to 0.0.0.0/0
-    ansible.builtin.shell:
-      cmd: touch /etc/sysconfig/network-scripts/route-eth1 && echo "0.0.0.0/0 via 192.168.255.9" > /etc/sysconfig/network-scripts/route-eth1
+  - name: copy ifcfg-eth1 & ifcfg-eth1
+    ansible.builtin.copy:
+      src: "{{ item }}"
+      dest: /etc/sysconfig/network-scripts/
+      owner: root
+      group: root
+      mode: 0644
+    with_items:
+      - ./files/ifcfg-eth1
+      - ./files/ifcfg-eth2
 
-- hosts: Router-2
-  become: true
-  tasks:
+  - name: create ifcfg-bond0
+    ansible.builtin.template:
+      src: ./files/ifcfg-bond0.j2
+      dest: /etc/sysconfig/network-scripts/ifcfg-bond0
+      owner: root
+      group: root
+      mode: 0644
 
-  - name: add route to 0.0.0.0/0
-    ansible.builtin.shell:
-      cmd: touch /etc/sysconfig/network-scripts/route-eth1 && echo "0.0.0.0/0 via 192.168.255.5" > /etc/sysconfig/network-scripts/route-eth1
+  - name: restarted NetworkManager service
+    ansible.builtin.systemd:
+      name: NetworkManager
+      state: restarted
 
-- hosts: Server-cent
-  become: true
-  tasks:
-
-  - name: add default gateway for central server
-    lineinfile:
-      dest: /etc/sysconfig/network-scripts/ifcfg-eth1
-      line: GATEWAY=192.168.0.1
-
-- hosts: Server-1
-  become: true
-  tasks:
-
-  - name: add default gateway for central server
-    lineinfile:
-      dest: /etc/sysconfig/network-scripts/ifcfg-eth1
-      line: GATEWAY=192.168.2.129
-
-- hosts: Server-2
-  become: true
-  tasks:
-
-  - name: add default gateway for central server
-    lineinfile:
-      dest: /etc/sysconfig/network-scripts/ifcfg-eth1
-      line: GATEWAY=192.168.1.1
-
-- hosts: All
-  become: true
-  tasks:
-
-  - name: Reboot the servers
+  - name: Reboot the inetRouter & centralRouter
     ansible.builtin.reboot:
-      msg: "Reboot initiated by Ansible" 
+      msg: "Reboot initiated by Ansible"

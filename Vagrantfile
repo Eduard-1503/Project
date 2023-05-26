@@ -40,8 +40,8 @@ Vagrant.configure("2") do |config|
     o1r.vm.network :private_network, ip: '192.168.255.10', adapter: 2, netmask: '255.255.255.252', virtualbox__intnet: 'office1-central'
     o1r.vm.network :private_network, adapter: 3, auto_config: false, virtualbox__intnet: 'vlan1'
     o1r.vm.network :private_network, adapter: 4, auto_config: false, virtualbox__intnet: 'vlan1'
-    o1r.vm.network :private_network, adapter: 5, auto_config: false, virtualbox__intnet: 'vlan1'
-    o1r.vm.network :private_network, adapter: 6, auto_config: false, virtualbox__intnet: 'vlan1'
+    o1r.vm.network :private_network, adapter: 5, auto_config: false, virtualbox__intnet: 'vlan2'
+    o1r.vm.network :private_network, adapter: 6, auto_config: false, virtualbox__intnet: 'vlan2'
     o1r.vm.network :private_network, ip: '192.168.56.20', adapter: 8
     # Change memory size
     o1r.vm.provider :virtualbox do |vb|
