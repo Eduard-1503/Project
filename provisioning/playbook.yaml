@@ -28,73 +28,168 @@
       - traceroute
       - tcpdump
       - net-tools
+      - nmap
       - nano
       - mc
 
-- hosts: Servers
-  become: yes
+- hosts: centralServer
+  become: true
   tasks:
 
-  - name: create ifcfg-vlan1
-    ansible.builtin.template:
-      src: ./files/ifcfg-vlan.j2
-      dest: /etc/sysconfig/network-scripts/ifcfg-vlan1
-      owner: root
-      group: root
-      mode: 0644
-
-  - name: restarted NetworkManager service
-    ansible.builtin.systemd:
-      name: NetworkManager
-      state: restarted
-      enabled: yes
-
-- hosts: Clients
-  become: yes
-  tasks:
-
-  - name: create ifcfg-vlan1
-    ansible.builtin.template:
-      src: ./files/ifcfg-vlan.j2
-      dest: /etc/sysconfig/network-scripts/ifcfg-vlan1
-      owner: root
-      group: root
-      mode: 0644
-
-  - name: restarted NetworkManager service
-    ansible.builtin.systemd:
-      name: NetworkManager
-      state: restarted
-      enabled: yes
-
-- hosts: inetRouter,centralRouter
-  become: yes
-  tasks:
-
-  - name: copy ifcfg-eth1 & ifcfg-eth1
-    ansible.builtin.copy:
-      src: "{{ item }}"
-      dest: /etc/sysconfig/network-scripts/
-      owner: root
-      group: root
-      mode: 0644
+  - name: install nginx
+    ansible.builtin.yum: name={{ item }} state=latest
     with_items:
-      - ./files/ifcfg-eth1
-      - ./files/ifcfg-eth2
+      - nginx
 
-  - name: create ifcfg-bond0
-    ansible.builtin.template:
-      src: ./files/ifcfg-bond0.j2
-      dest: /etc/sysconfig/network-scripts/ifcfg-bond0
-      owner: root
-      group: root
-      mode: 0644
+  - name: restarted nginx
+    ansible.builtin.systemd:
+      name: nginx
+      state: restarted
+      enabled: yes
+
+  - name: del default gateway
+    ansible.builtin.lineinfile:
+      dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+      line: DEFROUTE=no
+
+  - name: add route to 0.0.0.0/0
+    ansible.builtin.shell:
+      cmd: touch /etc/sysconfig/network-scripts/route-eth1 && echo "0.0.0.0/0 via 192.168.0.1" > /etc/sysconfig/network-scripts/route-eth1
+
+#  - name: add default gateway
+#    ansible.builtin.shell:
+#      cmd: echo 'GATEWAY=192.168.0.1' >> /etc/sysconfig/network-scripts/ifcfg-eth1 && echo 'DEFROUTE=yes' >> /etc/sysconfig/network-scripts/ifcfg-eth1
 
   - name: restarted NetworkManager service
     ansible.builtin.systemd:
       name: NetworkManager
       state: restarted
+      enabled: yes
 
-  - name: Reboot the inetRouter & centralRouter
+- hosts: Routers
+  become: true
+  tasks:
+
+  - name: set up forward packages across routers
+    ansible.posix.sysctl:
+      name: net.ipv4.conf.all.forwarding
+      value: '1'
+      state: present
+
+- hosts: centralRouter
+  become: true
+  tasks:
+
+  - name: del default gateway
+    ansible.builtin.lineinfile:
+      dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+      line: DEFROUTE=no
+
+  - name: add route to 0.0.0.0/0
+    ansible.builtin.shell:
+      cmd: touch /etc/sysconfig/network-scripts/route-eth1 && echo "0.0.0.0/0 via 192.168.255.1" > /etc/sysconfig/network-scripts/route-eth1
+
+  - name: restarted NetworkManager service
+    ansible.builtin.systemd:
+      name: NetworkManager
+      state: restarted
+      enabled: yes
+
+  - name: set up iptables
+    ansible.builtin.copy:
+      src: ./files/knock.sh
+      dest: /root/knock.sh
+      owner: root
+      group: root
+      mode: 0770
+
+# - hosts: inetRouter-1, inetRouter-2
+#   become: true
+#   tasks:
+
+#   - name: install packages
+#     ansible.builtin.yum:
+#       name: "{{ packages }}"
+#       state: present
+#     vars:
+#       packages:
+#       - iptables
+#       - iptables-services
+
+#  - name: set up iptables
+#    ansible.builtin.copy:
+#      src: ./files/ipt-ri.txt
+#      dest: /etc/sysconfig/iptables
+#      owner: root
+#      group: root
+#      mode: 0600
+
+#  - name: restart iptables
+#    ansible.builtin.systemd:
+#      name: iptables
+#      state: restarted
+#      enabled: true
+
+- hosts: inetRouter-1
+  become: true
+  tasks:
+
+  - name: install packages
+    ansible.builtin.yum:
+      name: "{{ packages }}"
+      state: present
+    vars:
+      packages:
+      - iptables
+      - iptables-services
+
+  - name: add default gateway
+    ansible.builtin.lineinfile:
+      dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+      line: DEFROUTE=yes
+
+  - name: add route to 192.168.0.0/22
+    ansible.builtin.shell:
+      cmd: touch /etc/sysconfig/network-scripts/route-eth1 && echo "192.168.0.0/22 via 192.168.255.2" > /etc/sysconfig/network-scripts/route-eth1
+
+  - name: set up iptables
+    ansible.builtin.copy:
+      src: ./files/ipt-ri.txt
+      dest: /etc/sysconfig/iptables
+      owner: root
+      group: root
+      mode: 0600
+
+  - name: restarted iptables
+    ansible.builtin.systemd:
+      name: iptables
+      state: restarted
+      enabled: yes
+
+  - name: restarted Network service
+    ansible.builtin.systemd:
+      name: NetworkManager
+      state: restarted
+      enabled: yes
+
+  - name: set up sshd
+    ansible.builtin.copy:
+      src: ./files/sshd-ri
+      dest: /etc/ssh/sshd_config
+      owner: root
+      group: root
+      mode: 0600
+
+  - name: restarted sshd service
+    ansible.builtin.systemd:
+      name: sshd
+      state: restarted
+      enabled: yes
+
+- hosts: all
+  become: yes
+  tasks:
+
+  - name: Reboot the servers
     ansible.builtin.reboot:
       msg: "Reboot initiated by Ansible"
