@@ -22,6 +22,7 @@ Vagrant.configure("2") do |config|
     ir2.vm.host_name = 'inetRouter-2'
     # Add networks
     # ir2.vm.network 'forwarded_port', guest: 8080, host: 8080, protocol: 'tcp'
+    ir2.vm.network :private_network, ip: '192.168.255.5', adapter: 2, netmask: "255.255.255.252", virtualbox__intnet: 'inetrouter2-net'
     ir2.vm.network 'private_network', ip: '192.168.56.10', adapter: 8
     # Change memory size
     ir2.vm.provider :virtualbox do |vb|
@@ -36,6 +37,7 @@ Vagrant.configure("2") do |config|
     rt_c.vm.host_name = 'centralRouter'
    # Add network
     rt_c.vm.network :private_network, ip: '192.168.255.2', adapter: 2, netmask: "255.255.255.252", virtualbox__intnet: 'inetrouter1-net'
+    rt_c.vm.network :private_network, ip: '192.168.255.4', adapter: 4, netmask: "255.255.255.252", virtualbox__intnet: 'inetrouter2-net'
     rt_c.vm.network :private_network, ip: '192.168.0.1', adapter: 3, netmask: "255.255.255.240", virtualbox__intnet: 'dir-net'
     rt_c.vm.network :private_network, ip: '192.168.56.11', adapter: 8
     # Change memory size
