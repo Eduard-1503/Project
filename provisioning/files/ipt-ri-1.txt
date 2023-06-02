@@ -30,10 +30,6 @@
 # Rules for icmp
 -A FORWARD -i eth0 -p icmp -j ACCEPT
 -A FORWARD -i eth1 -p icmp -j ACCEPT
-# Rules for http
--A FORWARD -i eth0 -o eth1 -p tcp -m tcp --dport 80 --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j ACCEPT
--A FORWARD -i eth1 -o eth0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
--A FORWARD -i eth0 -o eth1 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 COMMIT
 
 *nat
@@ -41,9 +37,5 @@ COMMIT
 :INPUT ACCEPT [0:0]
 :OUTPUT ACCEPT [0:0]
 :POSTROUTING ACCEPT [0:0]
-# Rules for http
--A PREROUTING -i eth0 -p tcp -m tcp --dport 80 -j DNAT --to-destination 192.168.0.2
--A POSTROUTING -d 192.168.0.2/32 -o eth1 -p tcp -m tcp --dport 80 -j SNAT --to-source 192.168.255.1
-#
 -A POSTROUTING ! -d 192.168.0.0/16 -o eth0 -j MASQUERADE
 COMMIT
