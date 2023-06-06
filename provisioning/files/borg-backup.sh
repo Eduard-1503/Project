@@ -33,7 +33,7 @@ $Check$Repos
 echo " " >> $Log
 echo " " >> $Log
 echo "    Prune started" >> $Log
-$Pr --keep-minutely=10 --keep-daily=90 --keep-monthly=12 --keep-yearly=1 $Repos >> $Log 2>&1
+$Pr --keep-hourly=2 --keep-daily=90 --keep-monthly=12 --keep-yearly=1 $Repos >> $Log 2>&1
 echo " " >> $Log
 $Comp$Repos $Log 2>&1
 
