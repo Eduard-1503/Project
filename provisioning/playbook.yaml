@@ -1,233 +1,94 @@
 ---
-- hosts: all
+- hosts: All
   become: yes
   tasks:
 
-  - name: copy timezone
+  - name: Copy timezone
     ansible.builtin.copy:
       src: /usr/share/zoneinfo/Europe/Moscow
       dest: /etc/localtime
       owner: root
 
-  - name: restart chronyd
+  - name: Restart chronyd
     ansible.builtin.systemd:
       name: chronyd
       state: restarted
       enabled: yes
 
-  - name: update the rpm
+  - name: Update the rpm
     ansible.builtin.dnf:
       name:
         - rpm
       state: latest
       update_only: yes
 
-  - name: install packages
-    ansible.builtin.yum: name={{ item }} state=latest
-    with_items:
-      - traceroute
-      - tcpdump
-      - net-tools
-      - nmap
-      - nano
-      - mc
-
-- hosts: centralServer
-  become: true
-  tasks:
-
-  - name: install nginx
-    ansible.builtin.yum: name={{ item }} state=latest
-    with_items:
-      - nginx
-
-  - name: restarted nginx
-    ansible.builtin.systemd:
-      name: nginx
-      state: restarted
-      enabled: yes
-
-  - name: del default gateway
-    ansible.builtin.lineinfile:
-      dest: /etc/sysconfig/network-scripts/ifcfg-eth0
-      line: DEFROUTE=no
-
-  - name: add route to 0.0.0.0/0
+  - name: Enabled powertools
     ansible.builtin.shell:
-      cmd: touch /etc/sysconfig/network-scripts/route-eth1 && echo "0.0.0.0/0 via 192.168.0.1" > /etc/sysconfig/network-scripts/route-eth1
+      cmd: dnf config-manager --set-enabled powertools
 
-  - name: restarted NetworkManager service
-    ansible.builtin.systemd:
-      name: NetworkManager
-      state: restarted
-      enabled: yes
-
-- hosts: Routers
-  become: true
-  tasks:
-
-  - name: set up forward packages across routers
-    ansible.posix.sysctl:
-      name: net.ipv4.conf.all.forwarding
-      value: '1'
+  - name: Install epel-release
+    ansible.builtin.dnf:
+      name: epel-release
       state: present
 
-- hosts: centralRouter
-  become: true
-  tasks:
-
-  - name: del default gateway
-    ansible.builtin.lineinfile:
-      dest: /etc/sysconfig/network-scripts/ifcfg-eth0
-      line: DEFROUTE=no
-
-  - name: add route to 0.0.0.0/0
-    ansible.builtin.shell:
-      cmd: touch /etc/sysconfig/network-scripts/route-eth1 && echo "0.0.0.0/0 via 192.168.255.1" > /etc/sysconfig/network-scripts/route-eth1
-
-  - name: restarted NetworkManager service
-    ansible.builtin.systemd:
-      name: NetworkManager
-      state: restarted
-      enabled: yes
-
-  - name: set up iptables
-    ansible.builtin.copy:
-      src: ./files/knock.sh
-      dest: /root/knock.sh
-      owner: root
-      group: root
-      mode: 0770
-
-# - hosts: inetRouter-1, inetRouter-2
-#   become: true
-#   tasks:
-
-#   - name: install packages
-#     ansible.builtin.yum:
-#       name: "{{ packages }}"
-#       state: present
-#     vars:
-#       packages:
-#       - iptables
-#       - iptables-services
-
-#  - name: set up iptables
-#    ansible.builtin.copy:
-#      src: ./files/ipt-ri.txt
-#      dest: /etc/sysconfig/iptables
-#      owner: root
-#      group: root
-#      mode: 0600
-
-#  - name: restart iptables
-#    ansible.builtin.systemd:
-#      name: iptables
-#      state: restarted
-#      enabled: true
-
-- hosts: inetRouter-1
-  become: true
-  tasks:
-
-  - name: install packages
-    ansible.builtin.yum:
-      name: "{{ packages }}"
+  - name: Install borgbackup
+    ansible.builtin.dnf:
+      name: borgbackup
       state: present
-    vars:
-      packages:
-      - iptables
-      - iptables-services
 
-  - name: add default gateway
-    ansible.builtin.lineinfile:
-      dest: /etc/sysconfig/network-scripts/ifcfg-eth0
-      line: DEFROUTE=yes
-
-  - name: add route to 192.168.0.0/22
-    ansible.builtin.shell:
-      cmd: touch /etc/sysconfig/network-scripts/route-eth1 && echo "192.168.0.0/22 via 192.168.255.2" > /etc/sysconfig/network-scripts/route-eth1
-
-  - name: set up iptables
-    ansible.builtin.copy:
-      src: ./files/ipt-ri-1.txt
-      dest: /etc/sysconfig/iptables
-      owner: root
-      group: root
-      mode: 0600
-
-  - name: restarted iptables
-    ansible.builtin.systemd:
-      name: iptables
-      state: restarted
-      enabled: yes
-
-  - name: restarted Network service
-    ansible.builtin.systemd:
-      name: NetworkManager
-      state: restarted
-      enabled: yes
-
-  - name: set up sshd
-    ansible.builtin.copy:
-      src: ./files/sshd-ri
-      dest: /etc/ssh/sshd_config
-      owner: root
-      group: root
-      mode: 0600
-
-  - name: restarted sshd service
-    ansible.builtin.systemd:
-      name: sshd
-      state: restarted
-      enabled: yes
-
-- hosts: inetRouter-2
+- hosts: Server-backup
   become: true
   tasks:
 
-  - name: install packages
-    ansible.builtin.yum:
-      name: "{{ packages }}"
+  - name: Create a new ext4 partition
+    community.general.parted:
+      device: /dev/sdb
+      number: 1
       state: present
-    vars:
-      packages:
-      - iptables
-      - iptables-services
+      fs_type: ext4
 
-  - name: add default gateway
-    ansible.builtin.lineinfile:
-      dest: /etc/sysconfig/network-scripts/ifcfg-eth0
-      line: DEFROUTE=yes
-
-  - name: add route to 192.168.0.0/22
+  - name: Create folder backup
     ansible.builtin.shell:
-      cmd: touch /etc/sysconfig/network-scripts/route-eth1 && echo "192.168.0.0/22 via 192.168.255.6" > /etc/sysconfig/network-scripts/route-eth1
+      cmd: echo "/dev/sdb1 /var/backup ext4     defaults        0 0" >> /etc/fstab
 
-  - name: set up iptables
+  - name: Add the user borg
+    ansible.builtin.user:
+      name: borg
+      comment: User for backup
+
+  - name: Create folder backup                                              
+    ansible.builtin.shell:
+      cmd: mkdir /var/backup && mkfs.ext4 /dev/sdb1 && mount /dev/sdb1 /var/backup/ && chown borg:borg /var/backup/
+
+  - name: Create .ssh
+    ansible.builtin.shell:
+      cmd: mkdir /home/borg/.ssh && chown borg:borg /home/borg/.ssh && chmod 700 /home/borg/.ssh  
+
+  - name: Copy authorized_keys
     ansible.builtin.copy:
-      src: ./files/ipt-ri-2.txt
-      dest: /etc/sysconfig/iptables
-      owner: root
-      group: root
+      src: ./files/id_rsa.pub
+      dest: /home/borg/.ssh/authorized_keys
+      owner: borg
       mode: 0600
 
-  - name: restarted iptables
-    ansible.builtin.systemd:
-      name: iptables
-      state: restarted
-      enabled: yes
-
-  - name: restarted Network service
-    ansible.builtin.systemd:
-      name: NetworkManager
-      state: restarted
-      enabled: yes
-
-- hosts: all
-  become: yes
+- hosts: Client
+  become: true
   tasks:
 
-  - name: Reboot the servers
-    ansible.builtin.reboot:
-      msg: "Reboot initiated by Ansible"
+  - name: Create .ssh           
+    ansible.builtin.shell:
+      cmd: mkdir /root/.ssh
+
+  - name: Copy id_rsa
+    ansible.builtin.copy:
+      src: ./files/id_rsa
+      dest: /root/.ssh/id_rsa
+      owner: root
+      mode: 0600
+
+  - name: Copy id_rsa.pub
+    ansible.builtin.copy:
+      src: ./files/id_rsa.pub 
+      dest: /root/.ssh/id_rsa.pub
+      owner: root
+      mode: 0644

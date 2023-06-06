@@ -1,11 +1,9 @@
 [All:children]
-Routers
 Servers
-
-[Routers]
-inetRouter-1 ansible_host=192.168.56.9 ansible_user=vagrant ansible_ssh_private_key_file=../.vagrant/machines/inetRouter-1/virtualbox/private_key
-inetRouter-2 ansible_host=192.168.56.10 ansible_user=vagrant ansible_ssh_private_key_file=../.vagrant/machines/inetRouter-2/virtualbox/private_key
-centralRouter ansible_host=192.168.56.11 ansible_user=vagrant ansible_ssh_private_key_file=../.vagrant/machines/centralRouter/virtualbox/private_key
+Clients
 
 [Servers]
-centralServer ansible_host=192.168.56.12 ansible_user=vagrant ansible_ssh_private_key_file=../.vagrant/machines/centralServer/virtualbox/private_key
+Server-backup ansible_host=192.168.56.9 ansible_user=vagrant ansible_ssh_private_key_file=../.vagrant/machines/Server-backup/virtualbox/private_key
+
+[Clients]
+Client ansible_host=192.168.56.10 ansible_user=vagrant ansible_ssh_private_key_file=../.vagrant/machines/Client/virtualbox/private_key
