@@ -36,6 +36,56 @@
       name: borgbackup
       state: present
 
+  - name: Install expect
+    ansible.builtin.dnf:
+      name: expect
+      state: present
+
+  - name: Install mc
+    ansible.builtin.dnf:
+      name: mc
+      state: present
+
+- hosts: Client
+  become: true
+  tasks:
+
+  - name: Create .ssh directory
+    ansible.builtin.file:
+      path=/root/.ssh
+      owner=root
+      group=root
+      mode=0700
+      state=directory
+
+  - name: Generation ssh keys
+    ansible.builtin.shell: |
+      set timeout 300
+      spawn ssh-keygen
+
+      expect "Enter file in which to save the key (/root/.ssh/id_rsa): "
+      send "\n"
+
+      expect "Enter passphrase (empty for no passphrase): "
+      send "\n"
+
+      expect "Enter same passphrase again: "
+      send "\n"
+
+      expect "Enter same passphrase again: "
+      send "\n"
+
+      exit 0
+    args:
+      executable: /usr/bin/expect
+    tags:
+      - create_ssh_key
+
+  - name: Copy id_rsa.pub in ./files/ to host machine
+    ansible.builtin.fetch:
+      src: /root/.ssh/id_rsa.pub
+      dest: ./files/
+
 - hosts: Server-backup
   become: true
   tasks:
@@ -60,13 +110,17 @@
     ansible.builtin.shell:
       cmd: mkdir /var/backup && mkfs.ext4 /dev/sdb1 && mount /dev/sdb1 /var/backup/ && chown borg:borg /var/backup/
 
-  - name: Create .ssh
-    ansible.builtin.shell:
-      cmd: mkdir /home/borg/.ssh && chown borg:borg /home/borg/.ssh && chmod 700 /home/borg/.ssh  
+  - name: Create .ssh directory
+    ansible.builtin.file:
+      path=/home/borg/.ssh
+      owner=borg
+      group=borg
+      mode=0700
+      state=directory
 
   - name: Copy authorized_keys
     ansible.builtin.copy:
-      src: ./files/id_rsa.pub
+      src: ./files/Client/root/.ssh/id_rsa.pub
       dest: /home/borg/.ssh/authorized_keys
       owner: borg
       mode: 0600
@@ -75,20 +129,53 @@
   become: true
   tasks:
 
-  - name: Create .ssh           
-    ansible.builtin.shell:
-      cmd: mkdir /root/.ssh
+  - name: Run expect to create backup repository
+    ansible.builtin.shell: |
+      set timeout 300
+      spawn borg init --encryption=repokey borg@192.168.56.9:/var/backup/Client/
 
-  - name: Copy id_rsa
-    ansible.builtin.copy:
-      src: ./files/id_rsa
-      dest: /root/.ssh/id_rsa
-      owner: root
-      mode: 0600
+      expect "Are you sure you want to continue connecting (yes/no/\\\[fingerprint\\\])? "
+      send "yes\n"
 
-  - name: Copy id_rsa.pub
+      expect "Enter new passphrase: "
+      send "\n"
+
+      expect "Enter same passphrase again: "
+      send "\n"
+
+      expect "Do you want your passphrase to be displayed for verification? \\\[yN\\\]: "
+      send -- "y\n"
+
+      expect "lace\\\(s\\\)."
+
+      exit 0
+    args:
+      executable: /usr/bin/expect
+    tags:
+      - borg_create_repo
+
+  - name: Create /root/scripts directory
+    ansible.builtin.file:
+      path=/root/scripts
+      owner=root
+      group=root
+      mode=0700
+      state=directory
+
+  - name: Copy script borg-backup.sh
     ansible.builtin.copy:
-      src: ./files/id_rsa.pub 
-      dest: /root/.ssh/id_rsa.pub
+      src: ./files/borg-backup.sh
+      dest: /root/scripts/borg-backup.sh
       owner: root
-      mode: 0644
+      mode: 0700
+
+  - name: Create job in cron for Borg backup
+    ansible.builtin.cron:
+      name: "Borg backup"
+      minute: "*/5"
+      hour: "*"
+      day: "*"
+      month: "*"
+      weekday: "*"
+      job: "/root/scripts/borg-backup.sh"
+
