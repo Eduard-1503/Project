@@ -1,9 +1,0 @@
-[All:children]
-Servers
-Clients
-
-[Servers]
-Server-backup ansible_host=192.168.56.9 ansible_user=vagrant ansible_ssh_private_key_file=../.vagrant/machines/Server-backup/virtualbox/private_key
-
-[Clients]
-Client ansible_host=192.168.56.10 ansible_user=vagrant ansible_ssh_private_key_file=../.vagrant/machines/Client/virtualbox/private_key

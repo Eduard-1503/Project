@@ -1,582 +1,0 @@
- 
- 
-    22:10:01
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading files4.99 MB O 2.28 MB C 2.28 MB D 86 N etc/selinux/targeted/policy/policy.31        9.84 MB O 4.26 MB C 4.25 MB D 176 N etc/resolv.conf                             20.11 MB O 7.88 MB C 7.88 MB D 264 N etc/udev/hwdb.bin                          20.85 MB O 8.01 MB C 8.01 MB D 410 N etc/systemd/system...er-wait-online.serviceRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_22:10:01
-Archive fingerprint: 8ad0489836326aa18a4623adf48fea60afd6f23e788b6312fe6d8200438a353c
-Time (start): Thu, 2023-06-08 22:10:02
-Time (end):   Thu, 2023-06-08 22:10:03
-Duration: 0.87 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB              8.13 MB
-All archives:               21.23 MB              8.14 MB              8.13 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     431                  439
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_22:10:01              Thu, 2023-06-08 22:10:02 [8ad0489836326aa18a4623adf48fea60afd6f23e788b6312fe6d8200438a353c]
- 
- 
- 
-    22:15:01
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading filesRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_22:15:01
-Archive fingerprint: 49b7225f09f460566c38937b355a65a3541fffd9c011194111d02754320fe728
-Time (start): Thu, 2023-06-08 22:15:03
-Time (end):   Thu, 2023-06-08 22:15:03
-Duration: 0.16 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB             48.68 kB
-All archives:               42.46 MB             16.28 MB              8.18 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     435                  879
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_22:15:01              Thu, 2023-06-08 22:15:03 [49b7225f09f460566c38937b355a65a3541fffd9c011194111d02754320fe728]
-Pruning archive: etc-2023-06-08_22:10:01              Thu, 2023-06-08 22:10:02 [8ad0489836326aa18a4623adf48fea60afd6f23e788b6312fe6d8200438a353c] (1/1)
- 
- 
- 
-    22:20:01
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading filesRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_22:20:01
-Archive fingerprint: dcd0900b668a0028045d0398bd88a82daa5aab75528634ba19477e61d15c0f7c
-Time (start): Thu, 2023-06-08 22:20:03
-Time (end):   Thu, 2023-06-08 22:20:03
-Duration: 0.14 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB                573 B
-All archives:               42.46 MB             16.28 MB              8.13 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     433                  880
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_22:20:01              Thu, 2023-06-08 22:20:03 [dcd0900b668a0028045d0398bd88a82daa5aab75528634ba19477e61d15c0f7c]
-Pruning archive: etc-2023-06-08_22:15:01              Thu, 2023-06-08 22:15:03 [49b7225f09f460566c38937b355a65a3541fffd9c011194111d02754320fe728] (1/1)
- 
- 
- 
-    22:25:01
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading filesRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_22:25:01
-Archive fingerprint: f9645d7a28de478798a145ca6b5284bca0d3c41394b196228c5258ed074f26ed
-Time (start): Thu, 2023-06-08 22:25:03
-Time (end):   Thu, 2023-06-08 22:25:03
-Duration: 0.14 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB                573 B
-All archives:               42.46 MB             16.28 MB              8.13 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     433                  880
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_22:25:01              Thu, 2023-06-08 22:25:03 [f9645d7a28de478798a145ca6b5284bca0d3c41394b196228c5258ed074f26ed]
-Pruning archive: etc-2023-06-08_22:20:01              Thu, 2023-06-08 22:20:03 [dcd0900b668a0028045d0398bd88a82daa5aab75528634ba19477e61d15c0f7c] (1/1)
- 
- 
- 
-    22:30:01
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading filesRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_22:30:01
-Archive fingerprint: f1b902a9ad0e19fbf2e05a8757fc989b43d99194cd20bb852b61fa525bf777f5
-Time (start): Thu, 2023-06-08 22:30:02
-Time (end):   Thu, 2023-06-08 22:30:03
-Duration: 0.13 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB                575 B
-All archives:               42.46 MB             16.28 MB              8.13 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     433                  880
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_22:30:01              Thu, 2023-06-08 22:30:02 [f1b902a9ad0e19fbf2e05a8757fc989b43d99194cd20bb852b61fa525bf777f5]
-Pruning archive: etc-2023-06-08_22:25:01              Thu, 2023-06-08 22:25:03 [f9645d7a28de478798a145ca6b5284bca0d3c41394b196228c5258ed074f26ed] (1/1)
- 
- 
- 
-    22:35:01
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading filesRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_22:35:01
-Archive fingerprint: 39cba1e4cf0f63a734d87b9e03835918dd9b8a1644ca3214b8e7475b115144c4
-Time (start): Thu, 2023-06-08 22:35:02
-Time (end):   Thu, 2023-06-08 22:35:02
-Duration: 0.16 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB             21.74 kB
-All archives:               42.46 MB             16.28 MB              8.15 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     434                  880
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_22:35:01              Thu, 2023-06-08 22:35:02 [39cba1e4cf0f63a734d87b9e03835918dd9b8a1644ca3214b8e7475b115144c4]
-Pruning archive: etc-2023-06-08_22:30:01              Thu, 2023-06-08 22:30:02 [f1b902a9ad0e19fbf2e05a8757fc989b43d99194cd20bb852b61fa525bf777f5] (1/1)
- 
- 
- 
-    22:40:01
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading filesRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_22:40:01
-Archive fingerprint: 4a879cb950856bdc13ce233947e3d083b8839dca2084cf715c4649dd24ced778
-Time (start): Thu, 2023-06-08 22:40:03
-Time (end):   Thu, 2023-06-08 22:40:03
-Duration: 0.14 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB                573 B
-All archives:               42.46 MB             16.28 MB              8.13 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     433                  880
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_22:40:01              Thu, 2023-06-08 22:40:03 [4a879cb950856bdc13ce233947e3d083b8839dca2084cf715c4649dd24ced778]
-Pruning archive: etc-2023-06-08_22:35:01              Thu, 2023-06-08 22:35:02 [39cba1e4cf0f63a734d87b9e03835918dd9b8a1644ca3214b8e7475b115144c4] (1/1)
- 
- 
- 
-    22:45:01
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading filesRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_22:45:01
-Archive fingerprint: 8b676f2cde24d4f041b8371860d5010a00d95bee3682a2e392cc54b21cfb9315
-Time (start): Thu, 2023-06-08 22:45:03
-Time (end):   Thu, 2023-06-08 22:45:03
-Duration: 0.13 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB                573 B
-All archives:               42.46 MB             16.28 MB              8.13 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     433                  880
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_22:45:01              Thu, 2023-06-08 22:45:03 [8b676f2cde24d4f041b8371860d5010a00d95bee3682a2e392cc54b21cfb9315]
-Pruning archive: etc-2023-06-08_22:40:01              Thu, 2023-06-08 22:40:03 [4a879cb950856bdc13ce233947e3d083b8839dca2084cf715c4649dd24ced778] (1/1)
- 
- 
- 
-    22:50:01
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading filesRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_22:50:01
-Archive fingerprint: d5f9aee257fb654a30ebb17c6345703a44372b6f9dc5b2c283912cc9843acb25
-Time (start): Thu, 2023-06-08 22:50:03
-Time (end):   Thu, 2023-06-08 22:50:03
-Duration: 0.14 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB                573 B
-All archives:               42.46 MB             16.28 MB              8.13 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     433                  880
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_22:50:01              Thu, 2023-06-08 22:50:03 [d5f9aee257fb654a30ebb17c6345703a44372b6f9dc5b2c283912cc9843acb25]
-Pruning archive: etc-2023-06-08_22:45:01              Thu, 2023-06-08 22:45:03 [8b676f2cde24d4f041b8371860d5010a00d95bee3682a2e392cc54b21cfb9315] (1/1)
- 
- 
- 
-    22:55:01
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading filesRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_22:55:01
-Archive fingerprint: dabfd0f65079bf193e927cbb2902140afa58f19635006c43100c337c3ab7925c
-Time (start): Thu, 2023-06-08 22:55:03
-Time (end):   Thu, 2023-06-08 22:55:03
-Duration: 0.13 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB                573 B
-All archives:               42.46 MB             16.28 MB              8.13 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     433                  880
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_22:55:01              Thu, 2023-06-08 22:55:03 [dabfd0f65079bf193e927cbb2902140afa58f19635006c43100c337c3ab7925c]
-Pruning archive: etc-2023-06-08_22:50:01              Thu, 2023-06-08 22:50:03 [d5f9aee257fb654a30ebb17c6345703a44372b6f9dc5b2c283912cc9843acb25] (1/1)
- 
- 
- 
-    23:00:01
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading filesRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_23:00:01
-Archive fingerprint: 2b9f58b4b6f43458e45c4e9ae334d4a6a751a95701e07645666bf6f7d658f324
-Time (start): Thu, 2023-06-08 23:00:03
-Time (end):   Thu, 2023-06-08 23:00:03
-Duration: 0.16 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB                573 B
-All archives:               42.46 MB             16.28 MB              8.13 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     433                  880
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_23:00:01              Thu, 2023-06-08 23:00:03 [2b9f58b4b6f43458e45c4e9ae334d4a6a751a95701e07645666bf6f7d658f324]
-Keeping archive: etc-2023-06-08_22:55:01              Thu, 2023-06-08 22:55:03 [dabfd0f65079bf193e927cbb2902140afa58f19635006c43100c337c3ab7925c]
- 
- 
- 
-    23:05:01
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading filesRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_23:05:01
-Archive fingerprint: cdd2a74a7310b311e33dd69917f2f054c00ecb61a24341271fdaf5e5055b64be
-Time (start): Thu, 2023-06-08 23:05:02
-Time (end):   Thu, 2023-06-08 23:05:03
-Duration: 0.15 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB             16.90 kB
-All archives:               63.69 MB             24.42 MB              8.15 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     435                 1320
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_23:05:01              Thu, 2023-06-08 23:05:02 [cdd2a74a7310b311e33dd69917f2f054c00ecb61a24341271fdaf5e5055b64be]
-Pruning archive: etc-2023-06-08_23:00:01              Thu, 2023-06-08 23:00:03 [2b9f58b4b6f43458e45c4e9ae334d4a6a751a95701e07645666bf6f7d658f324] (1/1)
-Keeping archive: etc-2023-06-08_22:55:01              Thu, 2023-06-08 22:55:03 [dabfd0f65079bf193e927cbb2902140afa58f19635006c43100c337c3ab7925c]
- 
- 
- 
-    23:10:01
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading filesRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_23:10:01
-Archive fingerprint: 8b10190c9c756d44e073f4b4f92248552c1e76fdaf0a8ee087318efa2faeea6a
-Time (start): Thu, 2023-06-08 23:10:02
-Time (end):   Thu, 2023-06-08 23:10:02
-Duration: 0.16 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB             27.52 kB
-All archives:               63.69 MB             24.42 MB              8.17 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     437                 1320
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_23:10:01              Thu, 2023-06-08 23:10:02 [8b10190c9c756d44e073f4b4f92248552c1e76fdaf0a8ee087318efa2faeea6a]
-Pruning archive: etc-2023-06-08_23:05:01              Thu, 2023-06-08 23:05:02 [cdd2a74a7310b311e33dd69917f2f054c00ecb61a24341271fdaf5e5055b64be] (1/1)
-Keeping archive: etc-2023-06-08_22:55:01              Thu, 2023-06-08 22:55:03 [dabfd0f65079bf193e927cbb2902140afa58f19635006c43100c337c3ab7925c]
- 
- 
- 
-    23:15:01
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading filesRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_23:15:01
-Archive fingerprint: 584df4b1eb2fc0a27fa555e630ae90f01d0722b970db24760e5de9315b0362b8
-Time (start): Thu, 2023-06-08 23:15:02
-Time (end):   Thu, 2023-06-08 23:15:02
-Duration: 0.13 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB                573 B
-All archives:               63.69 MB             24.42 MB              8.16 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     436                 1320
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_23:15:01              Thu, 2023-06-08 23:15:02 [584df4b1eb2fc0a27fa555e630ae90f01d0722b970db24760e5de9315b0362b8]
-Pruning archive: etc-2023-06-08_23:10:01              Thu, 2023-06-08 23:10:02 [8b10190c9c756d44e073f4b4f92248552c1e76fdaf0a8ee087318efa2faeea6a] (1/1)
-Keeping archive: etc-2023-06-08_22:55:01              Thu, 2023-06-08 22:55:03 [dabfd0f65079bf193e927cbb2902140afa58f19635006c43100c337c3ab7925c]
- 
- 
- 
-    23:20:01
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading filesRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_23:20:01
-Archive fingerprint: 3a4c82fadcf98579a354a6bd3ba7af6528eee243b62728e2c1a5e023bbe37dbc
-Time (start): Thu, 2023-06-08 23:20:03
-Time (end):   Thu, 2023-06-08 23:20:03
-Duration: 0.13 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB                573 B
-All archives:               63.69 MB             24.42 MB              8.16 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     436                 1320
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_23:20:01              Thu, 2023-06-08 23:20:03 [3a4c82fadcf98579a354a6bd3ba7af6528eee243b62728e2c1a5e023bbe37dbc]
-Pruning archive: etc-2023-06-08_23:15:01              Thu, 2023-06-08 23:15:02 [584df4b1eb2fc0a27fa555e630ae90f01d0722b970db24760e5de9315b0362b8] (1/1)
-Keeping archive: etc-2023-06-08_22:55:01              Thu, 2023-06-08 22:55:03 [dabfd0f65079bf193e927cbb2902140afa58f19635006c43100c337c3ab7925c]
- 
- 
- 
-    23:25:01
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading filesRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_23:25:01
-Archive fingerprint: d78e9115151f821624ac908774fa8fdfc12dda8d22a8eeea7549cc6aba3aa907
-Time (start): Thu, 2023-06-08 23:25:02
-Time (end):   Thu, 2023-06-08 23:25:03
-Duration: 0.13 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB                575 B
-All archives:               63.69 MB             24.42 MB              8.16 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     436                 1320
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_23:25:01              Thu, 2023-06-08 23:25:02 [d78e9115151f821624ac908774fa8fdfc12dda8d22a8eeea7549cc6aba3aa907]
-Pruning archive: etc-2023-06-08_23:20:01              Thu, 2023-06-08 23:20:03 [3a4c82fadcf98579a354a6bd3ba7af6528eee243b62728e2c1a5e023bbe37dbc] (1/1)
-Keeping archive: etc-2023-06-08_22:55:01              Thu, 2023-06-08 22:55:03 [dabfd0f65079bf193e927cbb2902140afa58f19635006c43100c337c3ab7925c]
- 
- 
- 
-    23:30:02
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading filesRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_23:30:02
-Archive fingerprint: e030c8a5ae482f653fc291cc2e7be8da4b41ffe56729bb0310e176d6eb2249fd
-Time (start): Thu, 2023-06-08 23:30:03
-Time (end):   Thu, 2023-06-08 23:30:03
-Duration: 0.13 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB                573 B
-All archives:               63.69 MB             24.42 MB              8.16 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     436                 1320
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_23:30:02              Thu, 2023-06-08 23:30:03 [e030c8a5ae482f653fc291cc2e7be8da4b41ffe56729bb0310e176d6eb2249fd]
-Pruning archive: etc-2023-06-08_23:25:01              Thu, 2023-06-08 23:25:02 [d78e9115151f821624ac908774fa8fdfc12dda8d22a8eeea7549cc6aba3aa907] (1/1)
-Keeping archive: etc-2023-06-08_22:55:01              Thu, 2023-06-08 22:55:03 [dabfd0f65079bf193e927cbb2902140afa58f19635006c43100c337c3ab7925c]
- 
- 
- 
-    23:35:01
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading filesRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_23:35:01
-Archive fingerprint: 9ca4ac97bffe34ba7022d643818bc065e720f5af29b77a9a741ddc59c68ebe23
-Time (start): Thu, 2023-06-08 23:35:03
-Time (end):   Thu, 2023-06-08 23:35:03
-Duration: 0.13 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB                575 B
-All archives:               63.69 MB             24.42 MB              8.16 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     436                 1320
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_23:35:01              Thu, 2023-06-08 23:35:03 [9ca4ac97bffe34ba7022d643818bc065e720f5af29b77a9a741ddc59c68ebe23]
-Pruning archive: etc-2023-06-08_23:30:02              Thu, 2023-06-08 23:30:03 [e030c8a5ae482f653fc291cc2e7be8da4b41ffe56729bb0310e176d6eb2249fd] (1/1)
-Keeping archive: etc-2023-06-08_22:55:01              Thu, 2023-06-08 22:55:03 [dabfd0f65079bf193e927cbb2902140afa58f19635006c43100c337c3ab7925c]
- 
- 
- 
-    23:40:01
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading filesRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_23:40:01
-Archive fingerprint: 3b3a69f0f09075c8927f79366e185168a7471457c526aa33c84a9d27e2b028af
-Time (start): Thu, 2023-06-08 23:40:02
-Time (end):   Thu, 2023-06-08 23:40:02
-Duration: 0.13 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB                573 B
-All archives:               63.69 MB             24.42 MB              8.16 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     436                 1320
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_23:40:01              Thu, 2023-06-08 23:40:02 [3b3a69f0f09075c8927f79366e185168a7471457c526aa33c84a9d27e2b028af]
-Pruning archive: etc-2023-06-08_23:35:01              Thu, 2023-06-08 23:35:03 [9ca4ac97bffe34ba7022d643818bc065e720f5af29b77a9a741ddc59c68ebe23] (1/1)
-Keeping archive: etc-2023-06-08_22:55:01              Thu, 2023-06-08 22:55:03 [dabfd0f65079bf193e927cbb2902140afa58f19635006c43100c337c3ab7925c]
- 
- 
- 
-    23:45:01
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading filesRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_23:45:01
-Archive fingerprint: da70c0bf93e23c28e51b00fca2c3554bef10239267f4b5376232ddf5dfa1c256
-Time (start): Thu, 2023-06-08 23:45:03
-Time (end):   Thu, 2023-06-08 23:45:03
-Duration: 0.13 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB                573 B
-All archives:               63.69 MB             24.42 MB              8.16 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     436                 1320
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_23:45:01              Thu, 2023-06-08 23:45:03 [da70c0bf93e23c28e51b00fca2c3554bef10239267f4b5376232ddf5dfa1c256]
-Pruning archive: etc-2023-06-08_23:40:01              Thu, 2023-06-08 23:40:02 [3b3a69f0f09075c8927f79366e185168a7471457c526aa33c84a9d27e2b028af] (1/1)
-Keeping archive: etc-2023-06-08_22:55:01              Thu, 2023-06-08 22:55:03 [dabfd0f65079bf193e927cbb2902140afa58f19635006c43100c337c3ab7925c]
- 
- 
- 
-    23:50:01
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading filesRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_23:50:01
-Archive fingerprint: 3653b93422d8763afec8bd8b57e908a76ee4a402e6b68cd82844a0e29a09a2b1
-Time (start): Thu, 2023-06-08 23:50:02
-Time (end):   Thu, 2023-06-08 23:50:03
-Duration: 0.13 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB                575 B
-All archives:               63.69 MB             24.42 MB              8.16 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     436                 1320
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_23:50:01              Thu, 2023-06-08 23:50:02 [3653b93422d8763afec8bd8b57e908a76ee4a402e6b68cd82844a0e29a09a2b1]
-Pruning archive: etc-2023-06-08_23:45:01              Thu, 2023-06-08 23:45:03 [da70c0bf93e23c28e51b00fca2c3554bef10239267f4b5376232ddf5dfa1c256] (1/1)
-Keeping archive: etc-2023-06-08_22:55:01              Thu, 2023-06-08 22:55:03 [dabfd0f65079bf193e927cbb2902140afa58f19635006c43100c337c3ab7925c]
- 
- 
- 
-    23:55:01
-    Backup started
-0 B O 0 B C 0 B D 0 N etc                                                       Initializing cache transaction: Reading configInitializing cache transaction: Reading chunksInitializing cache transaction: Reading filesRemote: Compacting segments   0%Remote: Compacting segments  50%Saving files cacheSaving chunks cacheSaving cache config                                                                                ------------------------------------------------------------------------------
-Archive name: etc-2023-06-08_23:55:01
-Archive fingerprint: ade6a28a54af8945b6a28d5d6b92fd1186c07e38559b6228e22a46088029ebbf
-Time (start): Thu, 2023-06-08 23:55:02
-Time (end):   Thu, 2023-06-08 23:55:02
-Duration: 0.13 seconds
-Number of files: 444
-Utilization of max. archive size: 0%
-------------------------------------------------------------------------------
-                       Original size      Compressed size    Deduplicated size
-This archive:               21.23 MB              8.14 MB                573 B
-All archives:               63.69 MB             24.42 MB              8.16 MB
-
-                       Unique chunks         Total chunks
-Chunk index:                     436                 1320
-------------------------------------------------------------------------------
- 
- 
-    Prune started
-Keeping archive: etc-2023-06-08_23:55:01              Thu, 2023-06-08 23:55:02 [ade6a28a54af8945b6a28d5d6b92fd1186c07e38559b6228e22a46088029ebbf]
-Pruning archive: etc-2023-06-08_23:50:01              Thu, 2023-06-08 23:50:02 [3653b93422d8763afec8bd8b57e908a76ee4a402e6b68cd82844a0e29a09a2b1] (1/1)
-Keeping archive: etc-2023-06-08_22:55:01              Thu, 2023-06-08 22:55:03 [dabfd0f65079bf193e927cbb2902140afa58f19635006c43100c337c3ab7925c]
- 
