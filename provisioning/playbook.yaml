@@ -1,5 +1,5 @@
 ---
-- hosts: Server-WD
+- hosts: All
   become: yes
   tasks:
 
@@ -22,16 +22,6 @@
       state: latest
       update_only: yes
 
-  - name: Add sudo for vagrant
-    ansible.builtin.shell:
-      cmd: echo "vagrant ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/vagrant
-
-  - name: Add docker repository
-    get_url:
-      url: https://download.docker.com/linux/centos/docker-ce.repo
-      dest: /etc/yum.repos.d/docer-ce.repo
-    become: yes
-
   - name: Install packages
     ansible.builtin.dnf:
       name: "{{ packages }}"
@@ -41,54 +31,148 @@
       - nano
       - mc
       - curl
-      - docker-ce
-      - docker-ce-cli
-      - containerd.io
-      - docker-buildx-plugin
-      - docker-compose-plugin
-    tags:
-      - docker
+      - expect
+      - mysql-server
+      - python3
+      - python3-PyMySQL
 
-  - name: Add remote "vagrant" user to "docker" group
-    ansible.builtin.user:
-      name: vagrant
-      group: "docker"
-      append: yes
-    tags:
-      - docker
-
-  - name: Ensure docker is running and enabled
+  - name: Restarted mysql-server service
     ansible.builtin.systemd:
-      name: docker
+      name: mysqld
       state: restarted
       enabled: yes
 
-  - name: Create folders /usr/local/bin/docker-compose
+  - name: Setup mysql_secure_installation
+    ansible.builtin.shell: |
+      set timeout 300
+      spawn mysql_secure_installation
+
+      expect "Press y|Y for Yes, any other key for No: "
+      send "\n"
+
+      expect "New password: "
+      send "MySq1\n"
+
+      expect "Re-enter new password: "
+      send "MySq1\n"
+
+      expect "Remove anonymous users? (Press y|Y for Yes, any other key for No) : "
+      send "y\n"
+
+      expect "Disallow root login remotely? (Press y|Y for Yes, any other key for No) : "
+      send "y\n"
+
+      expect "Remove test database and access to it? (Press y|Y for Yes, any other key for No) : "
+      send "y\n"
+
+      expect "Reload privilege tables now? (Press y|Y for Yes, any other key for No) : "
+      send "y\n"
+
+      exit 0
+    args:
+      executable: /usr/bin/expect
+
+  - name: Create /root/.my.cnf
     ansible.builtin.shell:
-      cmd: mkdir /usr/local/bin/docker-compose
+      cmd: echo "[client]" > /root/.my.cnf && echo "user=root" >> /root/.my.cnf && echo "password=MySq1" >> /root/.my.cnf && chmod 600 /root/.my.cnf
 
-  - name: Install docker-compose
-    ansible.builtin.get_url:
-      url: https://github.com/docker/compose/releases/download/v2.19.0/docker-compose-linux-x86_64
-      dest: /usr/local/bin/docker-compose
-      mode: 0777
+  - name: Create database user with name 'repl' and password 'OtusLinux2022' with all databases
+    community.mysql.mysql_user:
+      name: repl
+      password: OtusLinux2022
+      host: '%'
+      priv: "*.*:REPLICATION SLAVE"
+      state: present
 
-  - name: Create folders /home/vagrant/project
-    ansible.builtin.shell:
-      cmd: mkdir /home/vagrant/project
-
-  - name: Copy project
+  - name: Copy files configurations
     ansible.builtin.copy:
-      src: ./files/
-      dest: /home/vagrant/project
-      owner: vagrant
-      group: docker
-      mode: '0774'
+      src: ./files/my.cnf.d/
+      dest: /etc/my.cnf.d
 
-  - name: Reset ssh connection 
-    ansible.builtin.meta: reset_connection
+- hosts: Master
+  become: yes
+  tasks:
 
-  - name: Run container
+  - name: Create folder for backup on masters
     ansible.builtin.shell:
-      cmd: "/usr/local/bin/docker-compose/docker-compose-linux-x86_64 -f docker-compose.yaml up -d"
-      chdir: /home/vagrant/project
+      cmd: mkdir /home/vagrant/backup
+
+  - name: Copy dump db bet
+    ansible.builtin.copy:
+      src: ./files/bet.dmp
+      dest: /home/vagrant/backup
+
+  - name: Create a new database with name 'bet'
+    community.mysql.mysql_db:
+      name: bet
+      state: present
+
+  - name: Restore database bet
+    community.mysql.mysql_db:
+      name: bet
+      state: import
+      target: /home/vagrant/backup/bet.dmp
+
+  - name: Restarted mysql-server service
+    ansible.builtin.systemd:
+      name: mysqld
+      state: restarted
+      enabled: yes
+
+  - name: Create dump all masters
+    ansible.builtin.shell:
+      cmd: mysqldump --all-databases --triggers --routines --master-data --ignore-table=bet.events_on_demand --ignore-table=bet.v_same_event -u root > /home/vagrant/backup/master.sql
+
+  - name: Copy master.sql in ./files/ to host machine
+    ansible.builtin.fetch:
+      src: /home/vagrant/backup/master.sql
+      dest: ./files/
+
+- hosts: Slave
+  become: yes
+  tasks:
+
+  - name: Create folder for backup on slave
+    ansible.builtin.shell:
+      cmd: mkdir /home/vagrant/backup
+
+  - name: Copy dump all db 
+    ansible.builtin.copy:
+      src: ./files/Master/home/vagrant/backup/master.sql
+      dest: /home/vagrant/backup
+
+  - name: Delete 1-th string "Warning ..."
+    ansible.builtin.shell:
+      cmd: sed -i '1d' /home/vagrant/backup/master.sql
+
+  - name: Correct 01-base.cnf
+    ansible.builtin.shell:
+      cmd: sed -i 's/server-id\ =\ 1$/server-id\ =\ 2/' /etc/my.cnf.d/01-base.cnf
+
+  - name: Correct 05-binlog.cnf
+    ansible.builtin.shell:
+      cmd: echo "replicate-ignore-table=bet.events_on_demand" >> /etc/my.cnf.d/05-binlog.cnf && echo "replicate-ignore-table=bet.v_same_event" >> /etc/my.cnf.d/05-binlog.cnf
+
+  - name: Restarted mysql-server service
+    ansible.builtin.systemd:
+      name: mysqld
+      state: restarted
+      enabled: yes
+
+  - name: Restory all db
+    ansible.builtin.shell:
+      cmd: mysql -u root < /home/vagrant/backup/master.sql
+
+#  - name: Configure the replica to use GTID-based auto-positioning
+#    community.mysql.mysql_replication:
+#      mode: changeprimary
+#      primary_use_gtid: current_pos
+#      primary_host: 192.168.56.10
+#      primary_port: 3306
+#      primary_user: repl
+#      primary_password: OtusLinux2022
+#      primary_auto_position: true  
+
+#  - name: Start replica
+#    community.mysql.mysql_replication:
+#      mode: startreplica

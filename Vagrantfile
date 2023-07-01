@@ -2,25 +2,33 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  config.vm.define "Server-WD" do |srv|
+  config.vm.define "Master" do |srv|
     srv.vm.box = 'centos/stream8'
-    srv.vm.host_name = 'Server-WD'
-    # Forwardinf ports
-    srv.vm.network 'forwarded_port', guest: 8081, host: 8081, protocol: 'tcp'
-    srv.vm.network 'forwarded_port', guest: 8082, host: 8082, protocol: 'tcp'
-    srv.vm.network 'forwarded_port', guest: 8083, host: 8083, protocol: 'tcp'
+    srv.vm.host_name = 'Master'
+    # Add networks
+    srv.vm.network :private_network, ip: '192.168.56.10', adapter: 2
     # Change VM
     srv.vm.provider :virtualbox do |vb|
-      # Change memory size
-      vb.memory = "2048"
-      # Change amount cpus
-      vb.cpus = "2"
-      end
+    # Change memory size
+      vb.memory = '2048'
+    # Change memory size      
+      vb.cpus = '2'
     end
-#  end
-  config.vm.provision "ansible" do |ansible|
-    ansible.verbose = "vv"
-    ansible.playbook = "provisioning/playbook.yaml"
-    ansible.become = "true"
+  end
+end
+
+Vagrant.configure("2") do |config|
+  config.vm.define "Slave" do |srv|
+    srv.vm.box = 'centos/stream8'
+    srv.vm.host_name = 'Slave'
+    # Add networks
+    srv.vm.network :private_network, ip: '192.168.56.11', adapter: 2
+    # Change VM
+    srv.vm.provider :virtualbox do |vb|
+    # Change memory size
+      vb.memory = '1024'
+    # Change amount cpus      
+      vb.cpus = '1'
+    end
   end
 end
