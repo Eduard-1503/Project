@@ -22,6 +22,25 @@
       state: latest
       update_only: yes
 
+  - name: Stopped firewalld
+    ansible.builtin.systemd:
+      name: firewalld
+      state: stopped
+      enabled: false
+
+  - name: Put SELinux in permissive mode, logging actions that would be blocked.
+    ansible.posix.selinux:
+      policy: targeted
+      state: permissive
+
+  - name: Add postgres repository
+    ansible.builtin.shell:
+      cmd: dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+
+  - name: Disabled old postgres modules
+    ansible.builtin.shell:
+      cmd: dnf -qy module disable postgresql
+
   - name: Install packages
     ansible.builtin.dnf:
       name: "{{ packages }}"
@@ -30,149 +49,171 @@
       packages:
       - nano
       - mc
-      - curl
-      - expect
-      - mysql-server
       - python3
-      - python3-PyMySQL
+      - epel-release
 
-  - name: Restarted mysql-server service
-    ansible.builtin.systemd:
-      name: mysqld
-      state: restarted
-      enabled: yes
+- hosts: Nodes
+  become: yes
+  tasks:
 
-  - name: Setup mysql_secure_installation
-    ansible.builtin.shell: |
-      set timeout 300
-      spawn mysql_secure_installation
-
-      expect "Press y|Y for Yes, any other key for No: "
-      send "\n"
-
-      expect "New password: "
-      send "MySq1\n"
-
-      expect "Re-enter new password: "
-      send "MySq1\n"
-
-      expect "Remove anonymous users? (Press y|Y for Yes, any other key for No) : "
-      send "y\n"
-
-      expect "Disallow root login remotely? (Press y|Y for Yes, any other key for No) : "
-      send "y\n"
-
-      expect "Remove test database and access to it? (Press y|Y for Yes, any other key for No) : "
-      send "y\n"
-
-      expect "Reload privilege tables now? (Press y|Y for Yes, any other key for No) : "
-      send "y\n"
-
-      exit 0
-    args:
-      executable: /usr/bin/expect
-
-  - name: Create /root/.my.cnf
-    ansible.builtin.shell:
-      cmd: echo "[client]" > /root/.my.cnf && echo "user=root" >> /root/.my.cnf && echo "password=MySq1" >> /root/.my.cnf && chmod 600 /root/.my.cnf
-
-  - name: Create database user with name 'repl' and password 'OtusLinux2022' with all databases
-    community.mysql.mysql_user:
-      name: repl
-      password: OtusLinux2022
-      host: '%'
-      priv: "*.*:REPLICATION SLAVE"
+  - name: Install packages
+    ansible.builtin.dnf:
+      name: "{{ packages }}"
       state: present
-
-  - name: Copy files configurations
-    ansible.builtin.copy:
-      src: ./files/my.cnf.d/
-      dest: /etc/my.cnf.d
+    vars:
+      packages:
+      - postgresql15-server
+      - barman-cli
 
 - hosts: Master
   become: yes
   tasks:
 
-  - name: Create folder for backup on masters
+  - name: Initdb cluster postgres
     ansible.builtin.shell:
-      cmd: mkdir /home/vagrant/backup
+      cmd: /usr/pgsql-15/bin/postgresql-15-setup initdb
 
-  - name: Copy dump db bet
-    ansible.builtin.copy:
-      src: ./files/bet.dmp
-      dest: /home/vagrant/backup
-
-  - name: Create a new database with name 'bet'
-    community.mysql.mysql_db:
-      name: bet
-      state: present
-
-  - name: Restore database bet
-    community.mysql.mysql_db:
-      name: bet
-      state: import
-      target: /home/vagrant/backup/bet.dmp
-
-  - name: Restarted mysql-server service
+  - name: Restart postgres
     ansible.builtin.systemd:
-      name: mysqld
+      name: postgresql-15
+      state: started
+      enabled: yes
+
+  - name: Create role Replicator
+    ansible.builtin.shell:
+      cmd: echo "CREATE ROLE replicator WITH LOGIN REPLICATION Encrypted PASSWORD 'Otus2022';" | sudo -u postgres psql
+
+  - name: Create role Barman
+    ansible.builtin.shell:
+      cmd: echo "CREATE ROLE barman WITH LOGIN REPLICATION SUPERUSER Encrypted PASSWORD 'Otus2022';" | sudo -u postgres psql
+
+  - name: Copy conf files
+    ansible.builtin.copy:
+      src: ./files/conf-m/
+      dest: /var/lib/pgsql/15/data
+      owner: postgres
+      group: postgres
+      mode: 0600
+
+  - name: Restart postgres
+    ansible.builtin.systemd:
+      name: postgresql-15
       state: restarted
       enabled: yes
 
-  - name: Create dump all masters
+  - name: Create folders for ssh keys
     ansible.builtin.shell:
-      cmd: mysqldump --all-databases --triggers --routines --master-data --ignore-table=bet.events_on_demand --ignore-table=bet.v_same_event -u root > /home/vagrant/backup/master.sql
+      cmd: mkdir /var/lib/pgsql/.ssh && chown postgres:postgres /var/lib/pgsql/.ssh
 
-  - name: Copy master.sql in ./files/ to host machine
+  - name: Generate an OpenSSH for user Postgres
+    community.crypto.openssh_keypair:
+      path: /var/lib/pgsql/.ssh/id_rsa
+      owner: postgres
+
+  - name: Copy id_rsa.pub in ./files/ to host machine
     ansible.builtin.fetch:
-      src: /home/vagrant/backup/master.sql
+      src: /var/lib/pgsql/.ssh/id_rsa.pub
       dest: ./files/
 
 - hosts: Slave
   become: yes
   tasks:
 
-  - name: Create folder for backup on slave
+  - name: Copy data from Master
     ansible.builtin.shell:
-      cmd: mkdir /home/vagrant/backup
+      cmd: export PGPASSWORD='Otus2022' && pg_basebackup -h 192.168.56.10 -U replicator -p 5432 -D /var/lib/pgsql/15/data/ -R -P
 
-  - name: Copy dump all db 
+  - name: Copy conf files
     ansible.builtin.copy:
-      src: ./files/Master/home/vagrant/backup/master.sql
-      dest: /home/vagrant/backup
+      src: ./files/conf-s/
+      dest: /var/lib/pgsql/15/data
+      owner: postgres
+      group: postgres
+      mode: 0600
 
-  - name: Delete 1-th string "Warning ..."
+  - name: Copy data from Master
     ansible.builtin.shell:
-      cmd: sed -i '1d' /home/vagrant/backup/master.sql
+      cmd: chown -R postgres:postgres /var/lib/pgsql/15/
 
-  - name: Correct 01-base.cnf
-    ansible.builtin.shell:
-      cmd: sed -i 's/server-id\ =\ 1$/server-id\ =\ 2/' /etc/my.cnf.d/01-base.cnf
-
-  - name: Correct 05-binlog.cnf
-    ansible.builtin.shell:
-      cmd: echo "replicate-ignore-table=bet.events_on_demand" >> /etc/my.cnf.d/05-binlog.cnf && echo "replicate-ignore-table=bet.v_same_event" >> /etc/my.cnf.d/05-binlog.cnf
-
-  - name: Restarted mysql-server service
+  - name: Restart postgres
     ansible.builtin.systemd:
-      name: mysqld
+      name: postgresql-15
       state: restarted
       enabled: yes
 
-  - name: Restory all db
+- hosts: Barman
+  become: yes
+  tasks:
+
+  - name: Install packages
+    ansible.builtin.dnf:
+      name: "{{ packages }}"
+      state: present
+    vars:
+      packages:
+      - barman
+      - postgresql15
+
+  - name: Create folders for ssh keys
     ansible.builtin.shell:
-      cmd: mysql -u root < /home/vagrant/backup/master.sql
+      cmd: mkdir /var/lib/barman/.ssh && chown barman:barman /var/lib/barman/.ssh
 
-#  - name: Configure the replica to use GTID-based auto-positioning
-#    community.mysql.mysql_replication:
-#      mode: changeprimary
-#      primary_use_gtid: current_pos
-#      primary_host: 192.168.56.10
-#      primary_port: 3306
-#      primary_user: repl
-#      primary_password: OtusLinux2022
-#      primary_auto_position: true  
+  - name: Copy id_rsa.pub files for Master
+    ansible.builtin.copy:
+      src: ./files/Master/var/lib/pgsql/.ssh/id_rsa.pub
+      dest: /var/lib/barman/.ssh/authorized_keys
+      owner: barman
 
-#  - name: Start replica
-#    community.mysql.mysql_replication:
-#      mode: startreplica
+  - name: Generate an OpenSSH for user Barman
+    community.crypto.openssh_keypair:
+      path: /var/lib/barman/.ssh/id_rsa
+      owner: barman
+
+  - name: Copy id_rsa.pub in ./files/ to host machine
+    ansible.builtin.fetch:
+      src: /var/lib/barman/.ssh/id_rsa.pub
+      dest: ./files/
+
+  - name: Create .pgpass
+    ansible.builtin.shell:
+      cmd: touch /var/lib/barman/.pgpass && echo "192.168.56.10:5432:*:barman:Otus2022" > /var/lib/barman/.pgpass && chmod 0600 /var/lib/barman/.pgpass && chown barman:barman /var/lib/barman/.pgpass
+
+  - name: Copy barman.conf
+    ansible.builtin.copy:
+      src: ./files/barman.conf 
+      dest: /etc/barman.conf
+      owner: barman
+      group: barman
+      mode: 0755
+
+  - name: Copy master.conf
+    ansible.builtin.copy:
+      src: ./files/master.conf 
+      dest: /etc/barman.d/master.conf                 
+      owner: barman
+      group: barman
+      mode: 0755
+
+- hosts: Master
+  become: yes
+  tasks:
+
+  - name: Copy id_rsa.pub files for Master
+    ansible.builtin.copy:
+      src: ./files/Barman/var/lib/barman/.ssh/id_rsa.pub
+      dest: /var/lib/pgsql/.ssh/authorized_keys
+      owner: postgres
+
+- hosts: Barman
+  become: yes
+  tasks:
+
+  - name: Barman switch-wal master
+    become_user: barman
+    ansible.builtin.shell:
+      cmd: barman switch-wal master
+
+  - name: Barman cron
+    become_user: barman
+    ansible.builtin.shell:
+      cmd: barman cron
