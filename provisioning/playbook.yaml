@@ -3,17 +3,41 @@
   become: yes
   tasks:
 
+#
+# Plays setup timezone
+#
+
   - name: Copy timezone
     ansible.builtin.copy:
       src: /usr/share/zoneinfo/Europe/Moscow
       dest: /etc/localtime
       owner: root
+    tags:
+      - Rest-IR
+      - Rest-CR
+      - Rest-SrvWeb
+      - Rest-SrvBackup
+      - Rest-SrvDB
+      - Rest-SrvRep
+      - Rest-SrvLog
 
   - name: Restart chronyd
     ansible.builtin.systemd:
       name: chronyd
       state: restarted
       enabled: yes
+    tags:
+      - Rest-IR
+      - Rest-CR
+      - Rest-SrvWeb
+      - Rest-SrvBackup
+      - Rest-SrvDB
+      - Rest-SrvRep
+      - Rest-SrvLog
+
+#
+# Plays update rpm package
+#
 
   - name: Update the rpm
     ansible.builtin.dnf:
@@ -21,6 +45,612 @@
         - rpm
       state: latest
       update_only: yes
+    tags: 
+      - Rest-IR
+      - Rest-CR
+      - Rest-SrvWeb
+      - Rest-SrvBackup
+      - Rest-SrvDB
+      - Rest-SrvRep
+      - Rest-SrvLog
+
+#
+# Plays install packages
+#
+
+  - name: Install packages for debug & SElinux
+    ansible.builtin.dnf:
+      name: "{{ packages }}"
+      state: present
+    vars:
+      packages:
+  # For debug
+      - nano
+      - mc
+      - python3
+      - traceroute
+      - tcpdump
+      - net-tools
+      - nmap
+      - wget
+  # For setup SELinux
+      - policycoreutils-devel
+    tags:
+      - Rest-IR
+      - Rest-CR
+      - Rest-SrvWeb
+      - Rest-SrvBackup
+      - Rest-SrvDB
+      - Rest-SrvRep
+      - Rest-SrvLog
+
+#
+# Plays creation of network infrastructure
+#
+
+- hosts: IR,CR
+  become: true
+  tasks:
+
+  - name: Setup forward packages across routers
+    ansible.posix.sysctl:
+      name: net.ipv4.conf.all.forwarding
+      value: '1'
+      state: present
+    tags: 
+      - Rest-IR
+      - Rest-CR
+
+  #
+  # Plays create bond0
+  #
+
+  - name: Copy ifcfg-eth1 & ifcfg-eth2
+    ansible.builtin.copy:
+      src: "{{ item }}"
+      dest: /etc/sysconfig/network-scripts/
+      owner: root
+      group: root
+      mode: 0644
+    with_items:
+      - ./files/networks/ifcfg-eth1
+      - ./files/networks/ifcfg-eth2
+    tags:
+      - Rest-IR
+      - Rest-CR
+
+  - name: Create ifcfg-bond0
+    ansible.builtin.template:
+      src: ./files/networks/ifcfg-bond0.j2
+      dest: /etc/sysconfig/network-scripts/ifcfg-bond0
+      owner: root
+      group: root
+      mode: 0644
+    tags: 
+      - Rest-IR
+      - Rest-CR
+
+  - name: Restarted NetworkManager service
+    ansible.builtin.systemd:
+      name: NetworkManager
+      state: restarted
+    tags: 
+      - Rest-IR
+      - Rest-CR
+
+- hosts: IR
+  become: true
+  tasks:
+
+  - name: Reboot the IR
+    ansible.builtin.reboot:
+      msg: "Reboot initiated by Ansible"
+    tags: 
+      - Rest-IR
+
+- hosts: CR
+  become: true
+  tasks:
+
+  - name: Reboot the CR     
+    ansible.builtin.reboot:
+      msg: "Reboot initiated by Ansible"
+    tags:
+      - Rest-CR
+
+  # 
+  # End plays create bond0
+  #
+
+  #
+  # Plays create nftables
+  #
+  
+- hosts: IR
+  become: true
+  tasks:
+
+  - name: install packages iptables
+    ansible.builtin.yum:
+      name: "{{ packages }}"
+      state: present
+    vars:
+      packages:
+      - iptables
+      - iptables-services
+    tags: 
+      - Rest-IR
+
+  - name: set up iptables
+    ansible.builtin.copy:
+      src: ./files/networks/iptables_def.rules
+      dest: /etc/sysconfig/iptables
+      owner: root
+      group: root
+      mode: 0600
+    tags: 
+      - Rest-IR
+
+#  - name: restart iptables
+#    ansible.builtin.systemd:
+#      name: iptables
+#      state: restarted
+#      enabled: true
+#    tags: 
+#      - Rest-IR
+
+  - name: Reboot the IR
+    ansible.builtin.reboot:
+      msg: "Reboot initiated by Ansible"
+    tags:
+      - Rest-IR
+
+#  - name: Setup nftables
+#    ansible.builtin.copy:
+#      src: ./files/networks/nftables.conf
+#      dest: /etc/nftables/nftables.conf
+#      owner: root
+#      group: root
+#      mode: 0600
+
+#  - name: Add include nftables.conf
+#    ansible.builtin.shell:
+#      cmd: echo 'include "/etc/nftables/nftables.conf"' >> /etc/sysconfig/nftables.conf
+
+#  - name: Restart iptables
+#    ansible.builtin.systemd:
+#      name: nftables
+#      state: restarted
+#      enabled: true
+
+  #
+  # End plays create nftables
+  #
+
+- hosts: IR
+  become: true
+  tasks:
+
+  - name: Add route to 192.168.1.0/29
+    ansible.builtin.shell:
+      cmd: touch /etc/sysconfig/network-scripts/route-bond0 && echo "192.168.1.0/29 via 192.168.0.6" > /etc/sysconfig/network-scripts/route-bond0
+    tags: 
+      - Rest-IR
+
+- hosts: CR
+  become: true
+  tasks:
+
+  - name: Delete default gateway
+    ansible.builtin.lineinfile:
+      dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+      line: DEFROUTE=no
+    tags: 
+      - Rest-CR
+
+  - name: Add default gateway
+    ansible.builtin.lineinfile:
+      dest: /etc/sysconfig/network-scripts/ifcfg-bond0
+      line: DEFROUTE=yes
+    tags: 
+      - Rest-CR
+
+  - name: Add route to 0.0.0.0/0
+    ansible.builtin.shell:
+      cmd: echo "0.0.0.0/0 via 192.168.0.5" > /etc/sysconfig/network-scripts/route-bond0
+    tags: 
+      - Rest-CR
+
+- hosts: Servers
+  become: true
+  tasks:
+
+  - name: Delete default gateway
+    ansible.builtin.lineinfile:
+      dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+      line: DEFROUTE=no
+    tags:
+      - Rest-SrvWeb
+      - Rest-SrvBackup
+      - Rest-SrvDB
+      - Rest-SrvRep
+      - Rest-SrvLog
+
+  - name: Add default gateway
+    ansible.builtin.lineinfile:
+      dest: /etc/sysconfig/network-scripts/ifcfg-eth1
+      line: DEFROUTE=yes
+    tags:
+      - Rest-SrvWeb
+      - Rest-SrvBackup
+      - Rest-SrvDB
+      - Rest-SrvRep
+      - Rest-SrvLog
+
+- hosts: SrvLog,SrvRep,SrvDB
+  become: true
+  tasks:
+
+  - name: Add default gateway for servers
+    lineinfile:
+      dest: /etc/sysconfig/network-scripts/ifcfg-eth1
+      line: GATEWAY=192.168.1.1
+    tags:
+      - Rest-SrvDB
+      - Rest-SrvRep
+      - Rest-SrvLog
+
+  - name: Add route to 192.168.0.0/28
+    ansible.builtin.shell:
+      cmd: echo "192.168.0.0/28 via 192.168.1.1" > /etc/sysconfig/network-scripts/route-eth1
+    tags:
+      - Rest-SrvDB
+      - Rest-SrvRep
+      - Rest-SrvLog
+
+- hosts: SrvWeb
+  become: true
+  tasks:
+
+  - name: Add route to 192.168.1.1/29
+    ansible.builtin.shell:
+      cmd: echo "192.168.1.0/29 via 192.168.0.5" > /etc/sysconfig/network-scripts/route-eth1 
+    tags: 
+      - Rest-SrvWeb
+
+  - name: Add default gateway for CR
+    lineinfile:
+      dest: /etc/sysconfig/network-scripts/ifcfg-eth1
+      line: GATEWAY=192.168.0.1
+    tags:
+      - Rest-SrvWeb
+
+- hosts: SrvBackup
+  become: true
+  tasks:
+
+  - name: Add route to 192.168.1.1/28
+    ansible.builtin.shell:
+      cmd: echo "192.168.1.0/29 via 192.168.0.5" > /etc/sysconfig/network-scripts/route-eth1
+    tags:
+      - Rest-SrvBackup
+
+  - name: Add default gateway for central server
+    lineinfile:
+      dest: /etc/sysconfig/network-scripts/ifcfg-eth1
+      line: GATEWAY=192.168.0.9
+    tags:
+      - Rest-SrvBackup
+
+- hosts: IR
+  become: true
+  tasks:
+
+  - name: Reboot the IR
+    ansible.builtin.reboot:
+      msg: "Reboot initiated by Ansible"
+    tags:
+      - Rest-IR
+
+- hosts: CR
+  become: true
+  tasks:
+
+  - name: Reboot the CR
+    ansible.builtin.reboot:
+      msg: "Reboot initiated by Ansible"
+    tags:
+      - Rest-CR
+
+- hosts: SrvDB
+  become: true
+  tasks:
+
+  - name: Reboot the SrvDB
+    ansible.builtin.reboot:
+      msg: "Reboot initiated by Ansible"
+    tags:
+      - Rest-SrvDB
+
+- hosts: SrvWeb
+  become: true
+  tasks:
+
+  - name: Reboot the SrvWeb
+    ansible.builtin.reboot:
+      msg: "Reboot initiated by Ansible"
+    tags:
+      - Rest-SrvWeb
+
+- hosts: SrvRep
+  become: true
+  tasks:
+
+  - name: Reboot the SrvRep
+    ansible.builtin.reboot:
+      msg: "Reboot initiated by Ansible"
+    tags:
+      - Rest-SrvRep
+
+- hosts: SrvLog
+  become: true
+  tasks:
+
+  - name: Reboot the SrvLog
+    ansible.builtin.reboot:
+      msg: "Reboot initiated by Ansible"
+    tags:
+      - Rest-SrvLog
+
+- hosts: SrvBackup
+  become: true
+  tasks:
+
+  - name: Reboot the SrvBackup
+    ansible.builtin.reboot:
+      msg: "Reboot initiated by Ansible"
+    tags:
+      - Rest-SrvBackup
+
+#
+# End plays creation of network infrastructure
+#
+
+#
+# Plays for creating infrastructure for centralized storage of logs
+#
+
+- hosts: All
+  become: yes
+  tasks:
+
+  - name: Install rsyslog
+    ansible.builtin.dnf:
+      name: rsyslog
+      state: present
+    tags:
+      - Rest-IR
+      - Rest-CR
+      - Rest-SrvWeb
+      - Rest-SrvBackup
+      - Rest-SrvDB
+      - Rest-SrvRep
+      - Rest-SrvLog
+
+  - name: Setup SELinux for rsyslog
+    ansible.builtin.shell:
+      cmd: semanage port -m -t syslogd_port_t -p tcp 514 && semanage port -m -t syslogd_port_t -p udp 514
+    tags:
+      - Rest-IR
+      - Rest-CR
+      - Rest-SrvWeb
+      - Rest-SrvBackup
+      - Rest-SrvDB
+      - Rest-SrvRep
+      - Rest-SrvLog
+
+- hosts: SrvWeb
+  become: yes
+  tasks:
+
+  - name: Copy nginx_access.conf
+    ansible.builtin.copy:
+      src: ./files/rsyslogs/nginx_access.conf
+      dest: /etc/rsyslog.d/nginx_access.conf
+      owner: root
+      group: root
+      mode: 0644
+    tags:
+      - Rest-SrvWeb
+
+  - name: Copy nginx_error.conf
+    ansible.builtin.copy:
+      src: ./files/rsyslogs/nginx_error.conf
+      dest: /etc/rsyslog.d/nginx_error.conf
+      owner: root
+      group: root
+      mode: 0644
+    tags:
+      - Rest-SrvWeb
+
+  - name: Copy nginx.rules
+    copy:
+      src: files/rsyslogs/nginx.rules
+      dest: /etc/audit/rules.d/nginx.rules
+      owner: root
+    tags:
+      - Rest-SrvWeb
+
+- hosts: SrvBackup
+  become: yes
+  tasks:
+
+  - name: Copy barman.conf for rsyslog
+    ansible.builtin.copy:
+      src: ./files/rsyslogs/barman.conf
+      dest: /etc/rsyslog.d/barman.conf
+      owner: root
+      group: root
+      mode: 0644
+    tags: 
+      - Rest-SrvBackup
+
+- hosts: SrvDB,SrvRep
+  become: yes
+  tasks:
+
+  - name: Copy postgres.conf
+    ansible.builtin.copy:
+      src: ./files/rsyslogs/postgres.conf
+      dest: /etc/rsyslog.d/postgres.conf
+      owner: root
+      group: root
+      mode: 0644
+    tags: 
+      - Rest-SrvDB
+      - Rest-SrvRep
+
+  - name: Copy rsyslog-db.conf
+    ansible.builtin.copy:
+      src: ./files/rsyslogs/rsyslog-db.conf
+      dest: /etc/rsyslog.conf
+      owner: root
+      group: root
+      mode: 0644
+    tags:
+      - Rest-SrvDB
+      - Rest-SrvRep
+
+- hosts: IR,CR,SrvBackup,SrvWeb,SrvDB,SrvRep
+  become: yes
+  tasks:
+
+  - name: Copy auditd.conf & audisp-remote.conf
+    ansible.builtin.copy:
+      src: "{{ item }}"
+      dest: /etc/audit/
+      owner: root
+      group: root
+      mode: 0644
+    with_items:
+      - ./files/rsyslogs/auditd.conf
+      - ./files/rsyslogs/audisp-remote.conf
+    tags:
+      - Rest-IR
+      - Rest-CR
+      - Rest-SrvWeb
+      - Rest-SrvBackup
+      - Rest-SrvDB
+      - Rest-SrvRep
+
+  - name: Copy au-remote.conf
+    ansible.builtin.copy:
+      src: ./files/rsyslogs/au-remote.conf
+      dest: /etc/audit/plugins.d/au-remote.conf
+      owner: root
+      group: root
+      mode: 0644
+    tags:
+      - Rest-IR
+      - Rest-CR
+      - Rest-SrvWeb
+      - Rest-SrvBackup
+      - Rest-SrvDB
+      - Rest-SrvRep
+
+  - name: Copy audit.conf
+    ansible.builtin.copy:
+      src: ./files/rsyslogs/audit.conf
+      dest: /etc/rsyslog.d/audit.conf
+      owner: root
+      group: root
+      mode: 0644
+    tags:
+      - Rest-IR
+      - Rest-CR
+      - Rest-SrvWeb
+      - Rest-SrvBackup
+      - Rest-SrvDB
+      - Rest-SrvRep
+
+  - name: Restart rsyslog
+    ansible.builtin.systemd:
+      name: rsyslog
+      state: restarted
+      enabled: yes
+    tags:
+      - Rest-IR
+      - Rest-CR
+      - Rest-SrvWeb
+      - Rest-SrvBackup
+      - Rest-SrvDB
+      - Rest-SrvRep
+
+- hosts: SrvLog
+  become: true
+  tasks:
+
+  - name: Copy rsyslog.conf
+    ansible.builtin.copy:
+      src: ./files/rsyslogs/rsyslog.conf
+      dest: /etc/rsyslog.conf
+      owner: root
+      group: root
+      mode: 0644
+    tags: 
+      - Rest-SrvLog
+
+  - name: Restart rsyslog
+    ansible.builtin.systemd:
+      name: rsyslog
+      state: restarted
+      enabled: yes
+    tags: 
+      - Rest-SrvLog
+
+#
+# End plays for creating infrastructure for centralized storage of logs
+#
+
+#
+# Plays for creating postgres infrastructure
+#
+
+- hosts: SrvDB,SrvRep,SrvBackup
+  become: yes
+  tasks:
+
+  - name: Add postgres repository
+    ansible.builtin.shell:
+      cmd: dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+    tags:
+      - Rest-SrvBackup
+      - Rest-SrvDB
+      - Rest-SrvRep
+
+  - name: Disabled old postgres modules
+    ansible.builtin.shell:
+      cmd: dnf -qy module disable postgresql
+    tags:
+      - Rest-SrvBackup
+      - Rest-SrvDB
+      - Rest-SrvRep
+
+  - name: Install packages epel
+    ansible.builtin.dnf:
+      name: "{{ packages }}"
+      state: present
+    vars:
+      packages:
+      - epel-release
+    tags:
+      - Rest-SrvBackup
+      - Rest-SrvDB
+      - Rest-SrvRep
+
+#
+# Данные Plays удалить после настройки firewalld
+#
 
   - name: Stopped firewalld
     ansible.builtin.systemd:
@@ -28,35 +658,19 @@
       state: stopped
       enabled: false
 
-  - name: Put SELinux in permissive mode, logging actions that would be blocked.
-    ansible.posix.selinux:
-      policy: targeted
-      state: permissive
-
-  - name: Add postgres repository
+  - name: Setup SELinux for postgres
     ansible.builtin.shell:
-      cmd: dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-
-  - name: Disabled old postgres modules
-    ansible.builtin.shell:
-      cmd: dnf -qy module disable postgresql
-
-  - name: Install packages
-    ansible.builtin.dnf:
-      name: "{{ packages }}"
-      state: present
-    vars:
-      packages:
-      - nano
-      - mc
-      - python3
-      - epel-release
+      cmd: setsebool -P postgresql_can_rsync on && setsebool -P postgresql_selinux_transmit_client_label on && setsebool -P selinuxuser_postgresql_connect_enabled on
+    tags:
+      - Rest-SrvBackup
+      - Rest-SrvDB
+      - Rest-SrvRep
 
 - hosts: Nodes
   become: yes
   tasks:
 
-  - name: Install packages
+  - name: Install packages posgresql-server
     ansible.builtin.dnf:
       name: "{{ packages }}"
       state: present
@@ -64,88 +678,162 @@
       packages:
       - postgresql15-server
       - barman-cli
+    tags:
+      - Rest-SrvDB
+      - Rest-SrvRep
 
-- hosts: Master
+
+- hosts: SrvDB
   become: yes
   tasks:
+
+  - name: Check initdb cluster
+    ansible.builtin.stat: 
+      path: /var/lib/pgsql/15/data/pg_stat
+    register: check_initdb_result
+    tags:
+      - Rest-SrvDB
+
+  - name: Print execution check_initdb_result
+    ansible.builtin.debug:
+      var: check_initdb_result
+    tags:
+      - Rest-SrvDB
 
   - name: Initdb cluster postgres
     ansible.builtin.shell:
       cmd: /usr/pgsql-15/bin/postgresql-15-setup initdb
+    when: not check_initdb_result.stat.exists
+    tags:
+      - Rest-SrvDB
 
   - name: Restart postgres
     ansible.builtin.systemd:
       name: postgresql-15
       state: started
       enabled: yes
+    tags:
+      - Rest-SrvDB
 
   - name: Create role Replicator
     ansible.builtin.shell:
       cmd: echo "CREATE ROLE replicator WITH LOGIN REPLICATION Encrypted PASSWORD 'Otus2022';" | sudo -u postgres psql
+    tags:
+      - Rest-SrvDB
 
   - name: Create role Barman
     ansible.builtin.shell:
       cmd: echo "CREATE ROLE barman WITH LOGIN REPLICATION SUPERUSER Encrypted PASSWORD 'Otus2022';" | sudo -u postgres psql
+    tags:
+      - Rest-SrvDB
 
   - name: Copy conf files
     ansible.builtin.copy:
-      src: ./files/conf-m/
+      src: ./files/postgres/conf-m/
       dest: /var/lib/pgsql/15/data
       owner: postgres
       group: postgres
       mode: 0600
+    tags:
+      - Rest-SrvDB
 
   - name: Restart postgres
     ansible.builtin.systemd:
       name: postgresql-15
       state: restarted
       enabled: yes
+    tags:
+      - Rest-SrvDB
 
-  - name: Create folders for ssh keys
+  - name: Check folders for postgres ssh keys
+    ansible.builtin.stat:
+      path: /var/lib/pgsql/.ssh
+    register: check_postgres_folder_ssh
+    tags: 
+      - Rest-SrvDB
+
+  - name: Print execution check_initdb_result
+    ansible.builtin.debug:
+      var: check_postgres_folder_ssh
+    tags:
+      - Rest-SrvDB
+
+  - name: Create folders for postgres ssh keys
     ansible.builtin.shell:
       cmd: mkdir /var/lib/pgsql/.ssh && chown postgres:postgres /var/lib/pgsql/.ssh
+    when: not check_postgres_folder_ssh.stat.exists
+    tags:
+      - Rest-SrvDB
 
   - name: Generate an OpenSSH for user Postgres
     community.crypto.openssh_keypair:
       path: /var/lib/pgsql/.ssh/id_rsa
       owner: postgres
+    when: not check_postgres_folder_ssh.stat.exists
+    tags:
+      - Rest-SrvDB
 
   - name: Copy id_rsa.pub in ./files/ to host machine
     ansible.builtin.fetch:
       src: /var/lib/pgsql/.ssh/id_rsa.pub
-      dest: ./files/
+      dest: ./files/postgres/
+    when: not check_postgres_folder_ssh.stat.exists
+    tags:
+      - Rest-SrvDB
 
-- hosts: Slave
+- hosts: SrvRep
   become: yes
   tasks:
 
-  - name: Copy data from Master
+  - name: Check db cluster on SrvRep
+    ansible.builtin.stat:
+      path: /var/lib/pgsql/15/data/pg_stat
+    register: check_replica_result
+    tags: 
+      - Rest-SrvRep
+
+  - name: Print db cluster on SrvRep
+    ansible.builtin.debug:
+      var: check_replica_result
+    tags:
+      - Rest-SrvRep
+
+  - name: Copy data from SrvDB
     ansible.builtin.shell:
-      cmd: export PGPASSWORD='Otus2022' && pg_basebackup -h 192.168.56.10 -U replicator -p 5432 -D /var/lib/pgsql/15/data/ -R -P
+      cmd: export PGPASSWORD='Otus2022' && pg_basebackup -h 192.168.1.2 -U replicator -p 5432 -D /var/lib/pgsql/15/data/ -R -P
+    when: not check_replica_result.stat.exists
+    tags:
+      - Rest-SrvRep
 
   - name: Copy conf files
     ansible.builtin.copy:
-      src: ./files/conf-s/
+      src: ./files/postgres/conf-s/
       dest: /var/lib/pgsql/15/data
       owner: postgres
       group: postgres
       mode: 0600
+    tags:
+      - Rest-SrvRep
 
-  - name: Copy data from Master
+  - name: Chown /var/lib/pgsql/15/
     ansible.builtin.shell:
       cmd: chown -R postgres:postgres /var/lib/pgsql/15/
+    tags:
+      - Rest-SrvRep
 
   - name: Restart postgres
     ansible.builtin.systemd:
       name: postgresql-15
       state: restarted
       enabled: yes
+    tags:
+      - Rest-SrvRep
 
-- hosts: Barman
+- hosts: SrvBackup
   become: yes
   tasks:
 
-  - name: Install packages
+  - name: Install packages for barman
     ansible.builtin.dnf:
       name: "{{ packages }}"
       state: present
@@ -153,67 +841,525 @@
       packages:
       - barman
       - postgresql15
+    tags:
+      - Rest-SrvBackup
 
-  - name: Create folders for ssh keys
+  - name: Check folders for barman ssh keys
+    ansible.builtin.stat:
+      path: /var/lib/barman/.ssh
+    register: check_barman_folder_ssh
+    tags:
+      - Rest-SrvBackup
+
+  - name: Print execution check_initdb_result
+    ansible.builtin.debug:
+      var: check_barman_folder_ssh
+    tags:
+      - Rest-SrvBackup
+
+  - name: Create folders for ssh keys barmans
     ansible.builtin.shell:
       cmd: mkdir /var/lib/barman/.ssh && chown barman:barman /var/lib/barman/.ssh
+    when: not check_barman_folder_ssh.stat.exists
+    tags:
+      - Rest-SrvBackup
 
-  - name: Copy id_rsa.pub files for Master
+  - name: Copy id_rsa.pub files for SrvDB
     ansible.builtin.copy:
-      src: ./files/Master/var/lib/pgsql/.ssh/id_rsa.pub
+      src: ./files/postgres/SrvDB/var/lib/pgsql/.ssh/id_rsa.pub
       dest: /var/lib/barman/.ssh/authorized_keys
       owner: barman
+    when: not check_barman_folder_ssh.stat.exists
+    tags:
+      - Rest-SrvBackup
+      - SrvDB
 
   - name: Generate an OpenSSH for user Barman
     community.crypto.openssh_keypair:
       path: /var/lib/barman/.ssh/id_rsa
       owner: barman
+    tags:
+      - Rest-SrvBackup
 
   - name: Copy id_rsa.pub in ./files/ to host machine
     ansible.builtin.fetch:
       src: /var/lib/barman/.ssh/id_rsa.pub
-      dest: ./files/
+      dest: ./files/postgres/
+    tags:
+      - Rest-SrvBackup
 
   - name: Create .pgpass
     ansible.builtin.shell:
-      cmd: touch /var/lib/barman/.pgpass && echo "192.168.56.10:5432:*:barman:Otus2022" > /var/lib/barman/.pgpass && chmod 0600 /var/lib/barman/.pgpass && chown barman:barman /var/lib/barman/.pgpass
+      cmd: touch /var/lib/barman/.pgpass && echo "192.168.1.2:5432:*:barman:Otus2022" > /var/lib/barman/.pgpass && chmod 0600 /var/lib/barman/.pgpass && chown barman:barman /var/lib/barman/.pgpass
+    tags:
+      - Rest-SrvBackup
 
-  - name: Copy barman.conf
+  - name: Copy barman.conf for backup
     ansible.builtin.copy:
-      src: ./files/barman.conf 
+      src: ./files/postgres/barman.conf 
       dest: /etc/barman.conf
       owner: barman
       group: barman
       mode: 0755
+    tags:
+      - Rest-SrvBackup
 
-  - name: Copy master.conf
+  - name: Copy srvdb.conf
     ansible.builtin.copy:
-      src: ./files/master.conf 
-      dest: /etc/barman.d/master.conf                 
+      src: ./files/postgres/srvdb.conf 
+      dest: /etc/barman.d/srvdb.conf                 
       owner: barman
       group: barman
       mode: 0755
+    tags:
+      - Rest-SrvBackup
 
-- hosts: Master
+- hosts: SrvDB
   become: yes
   tasks:
 
-  - name: Copy id_rsa.pub files for Master
+  - name: Copy id_rsa.pub files to SrvDB
     ansible.builtin.copy:
-      src: ./files/Barman/var/lib/barman/.ssh/id_rsa.pub
+      src: ./files/postgres/SrvBackup/var/lib/barman/.ssh/id_rsa.pub
       dest: /var/lib/pgsql/.ssh/authorized_keys
       owner: postgres
+    tags:
+      - Rest-SrvBackup
+      - Rest-SrvDB
 
-- hosts: Barman
+#
+# End plays for creating postgres infrastructure
+#
+
+#
+# Play for setup zabbix
+#
+
+- hosts: All
   become: yes
   tasks:
 
-  - name: Barman switch-wal master
+  - name: Add zabbix repository
+    ansible.builtin.shell:
+      cmd: dnf install -y https://repo.zabbix.com/zabbix/6.0/rhel/8/x86_64/zabbix-release-6.0-4.el8.noarch.rpm
+    tags: [Rest-IR, Rest-CR, Rest-SrvWeb, Rest-SrvBackup, Rest-SrvDB, Rest-SrvRep, Rest-SrvLog]
+
+  - name: Clear old zabbix repository
+    ansible.builtin.shell:
+      cmd: dnf clean all
+    tags:
+      - Rest-IR
+      - Rest-CR
+      - Rest-SrvWeb
+      - Rest-SrvBackup
+      - Rest-SrvDB
+      - Rest-SrvRep
+      - Rest-SrvLog
+
+  - name: Install packages for zabbix-agent
+    ansible.builtin.dnf:
+      name: "{{ packages }}"
+      state: present
+    vars:
+      packages:
+      - zabbix-agent
+    tags:
+      - Rest-IR
+      - Rest-CR
+      - Rest-SrvWeb
+      - Rest-SrvBackup
+      - Rest-SrvDB
+      - Rest-SrvRep
+      - Rest-SrvLog
+
+- hosts: SrvWeb
+  become: yes
+  tasks:
+
+  - name: Install packages for zabbix-server to SrvWeb
+    ansible.builtin.dnf:
+      name: "{{ packages }}"
+      state: present
+    vars:
+      packages:
+      - zabbix-web-pgsql
+      - zabbix-nginx-conf
+      - zabbix-selinux-policy
+  # Fot https
+      - python3-pip
+      - python3-setuptools
+      - mod_ssl
+      - expect
+    tags: 
+      - Rest-SrvWeb
+
+  - name: Install pyopenssl
+    ansible.builtin.shell:
+      cmd: pip3 install --upgrade pip && pip3 install pyopenssl
+    tags:
+      - Rest-SrvWeb
+
+  - name: Create folder for ssl keys
+    ansible.builtin.shell:
+      cmd: mkdir -p /etc/zabbix/ssl/private && chmod 700 /etc/zabbix/ssl/private
+    tags:
+      - Rest-SrvWeb
+
+  - name: Generate an OpenSSL private key
+    openssl_privatekey:
+      path: /etc/zabbix/ssl/private/zabbix-key.pem
+      size: 4096
+      type: RSA
+      backup: yes
+    tags:
+      - Rest-SrvWeb
+
+  - name: Generate an OpenSSL Certificate Signing Request with Subject information
+    openssl_csr:
+      path: /etc/zabbix/ssl/zabbix-crt.pem
+      privatekey_path: /etc/zabbix/ssl/private/zabbix-key.pem
+      country_name: RU
+      organization_name: Home
+      email_address: baded@mail.ru
+      common_name: SrvWeb
+    tags:
+      - Rest-SrvWeb
+
+  - name: Generate a Self Signed OpenSSL certificate
+    openssl_certificate:
+      path: /etc/zabbix/ssl/zabbix-crt.pem
+      privatekey_path: /etc/zabbix/ssl/private/zabbix-key.pem
+      csr_path: /etc/zabbix/ssl/zabbix-crt.pem
+      provider: selfsigned
+    tags:
+      - Rest-SrvWeb
+
+  - name: Copy zabbix.conf files for nginx to SrvWeb
+    ansible.builtin.copy:
+      src: ./files/zabbix/zabbix.conf
+      dest: /etc/nginx/conf.d/zabbix.conf
+      mode: 0644
+    tags:
+      - Rest-SrvWeb
+
+  - name: Restart nginx
+    ansible.builtin.systemd:
+      name: nginx
+      state: restarted
+      enabled: yes
+    tags:
+      - Rest-SrvWeb
+
+  - name: Restart php-fpm
+    ansible.builtin.systemd:
+      name: php-fpm
+      state: restarted
+      enabled: yes
+    tags:
+      - Rest-SrvWeb
+
+- hosts: SrvDB      
+  become: yes
+  tasks:
+
+  - name: Setup SELinux for zabbix
+    ansible.builtin.shell:
+      cmd: setsebool -P httpd_can_network_connect_db on && setsebool -P httpd_can_connect_zabbix on
+    tags:
+      - Rest-SrvDB
+
+  - name: Install packages for zabbix to SrvDB
+    ansible.builtin.dnf:
+      name: "{{ packages }}"
+      state: present
+    vars:
+      packages:
+      - zabbix-server-pgsql
+      - zabbix-sql-scripts
+      - zabbix-selinux-policy
+    tags:
+      - Rest-SrvDB
+
+  - name: Create role Zabbix
+    ansible.builtin.shell:
+      cmd: echo "CREATE ROLE zabbix WITH LOGIN Encrypted PASSWORD 'ZabbiX';" | sudo -u postgres psql
+    tags:
+      - Rest-SrvDB
+
+# Check
+
+  - name: Create db zabbix
+    ansible.builtin.shell:
+      cmd: sudo -u postgres createdb -O zabbix zabbix
+    tags:
+      - Rest-SrvDB
+
+  - name: On Zabbix server host import initial schema and data
+    ansible.builtin.shell:
+      cmd: zcat /usr/share/zabbix-sql-scripts/postgresql/server.sql.gz | sudo -u zabbix psql zabbix
+    tags:
+      - Rest-SrvDB
+
+  - name: Correct zabbix_server.conf
+    ansible.builtin.shell:
+      cmd: sed -i 's/#\ DBPassword=$/DBPassword=ZabbiX/' /etc/zabbix/zabbix_server.conf
+    tags:
+      - Rest-SrvDB
+
+  - name: Restart zabbix-server
+    ansible.builtin.systemd:
+      name: zabbix-server
+      state: restarted
+      enabled: yes
+    tags:
+      - Rest-SrvDB
+
+  - name: Correct zabbix_agent.conf on SrvDB
+    ansible.builtin.shell:
+      cmd: sed -i 's/Hostname=Zabbix\ server$/Hostname=SrvDB,Zabbix\ server/' /etc/zabbix/zabbix_agentd.conf
+    tags:
+      - Rest-SrvDB
+
+  - name: Restart zabbix-agent
+    ansible.builtin.systemd:
+      name: zabbix-agent
+      state: restarted
+      enabled: yes
+    tags:
+      - Rest-SrvDB
+
+- hosts: IR,CR,SrvLog,SrvWeb,SrvRep,SrvBackup
+  become: yes
+  tasks:
+
+  - name: Correct zabbix_agent.conf 1
+    ansible.builtin.shell:
+      cmd: sed -i 's/Server=127.0.0.1$/Server=192.168.1.2/' /etc/zabbix/zabbix_agentd.conf && sed -i 's/ServerActive=127.0.0.1$/ServerActive=192.168.1.2/' /etc/zabbix/zabbix_agentd.conf && sed -i 's/Hostname=Zabbix\ server$/Hostname={{ ansible_facts.hostname }}/' /etc/zabbix/zabbix_agentd.conf
+    tags:
+      - Rest-IR
+      - Rest-CR
+      - Rest-SrvWeb
+      - Rest-SrvBackup
+      - Rest-SrvRep
+      - Rest-SrvLog
+
+  - name: Restart zabbix-agent
+    ansible.builtin.systemd:
+      name: zabbix-agent
+      state: restarted
+      enabled: yes
+    tags:
+      - Rest-IR
+      - Rest-CR
+      - Rest-SrvWeb
+      - Rest-SrvBackup
+      - Rest-SrvRep
+      - Rest-SrvLog
+
+#
+# End play for setup zabbix
+#
+
+#
+# Play for start backup
+#
+- hosts: SrvLog
+  become: yes
+  tasks:
+
+  - name: Install epel-release
+    ansible.builtin.dnf:
+      name: epel-release
+      state: present
+    tags:
+      - Rest-SrvLog
+
+  - name: Check folders ssh-key for backup on SrvLog
+    ansible.builtin.stat:
+      path: /root/.ssh
+    register: check_srvlog_ssh_folder
+    tags:
+      - Rest-SrvLog
+
+  - name: Print execution check_srvlog_ssh_folder
+    ansible.builtin.debug:
+      var: check_srvlog_ssh_folder
+    tags:
+      - Rest-SrvLog
+
+  - name: Create .ssh on SrvLog
+    ansible.builtin.shell:
+      cmd: mkdir /root/.ssh
+    when: not check_srvlog_ssh_folder.stat.exists
+    tags:
+      - Rest-SrvLog
+###
+  - name: Generate an OpenSSH for user Borg
+    community.crypto.openssh_keypair:
+      path: /root/.ssh/id_rsa
+      owner: root
+    when: not check_srvlog_ssh_folder.stat.exists
+    tags:
+      - Rest-SrvLog
+
+  - name: Copy id_rsa.pub in ./files/ to host machine
+    ansible.builtin.fetch:
+      src: /root/.ssh/id_rsa.pub
+      dest: ./files/backup/
+    when: not check_srvlog_ssh_folder.stat.exists
+    tags:
+      - Rest-SrvLog
+
+- hosts: SrvLog,SrvBackup
+  become: yes
+  tasks:
+
+  - name: Enabled powertools
+    ansible.builtin.shell:
+      cmd: dnf config-manager --set-enabled powertools
+    tags:
+      - Rest-SrvBackup
+      - Rest-SrvLog
+
+  - name: Install borgbackup
+    ansible.builtin.dnf:
+      name: borgbackup
+      state: present
+    tags:
+      - Rest-SrvBackup
+      - Rest-SrvLog
+
+- hosts: SrvBackup
+  become: true
+  tasks:
+
+  - name: Add the user borg
+    ansible.builtin.user:
+      name: borg
+      comment: User for backup
+    tags:
+      - Rest-SrvBackup
+
+  - name: Check folders for borg backup
+    ansible.builtin.stat:
+      path: /var/backup
+    register: check_backup_folder
+    tags:
+      - Rest-SrvBackup
+
+  - name: Print execution check_backup_folder
+    ansible.builtin.debug:
+      var: check_backup_folder
+    tags:
+      - Rest-SrvBackup
+
+  - name: Create folder backup                                              
+    ansible.builtin.shell:
+      cmd: mkdir /var/backup && chown borg:borg /var/backup/
+    when: not check_backup_folder.stat.exists
+    tags:
+      - Rest-SrvBackup
+
+  - name: Check folders ssh-key for backup
+    ansible.builtin.stat:
+      path: /home/borg/.ssh        
+    register: check_backup_ssh_folder 
+    tags:
+      - Rest-SrvBackup
+
+  - name: Print execution check_backup_ssh_folder
+    ansible.builtin.debug:
+      var: check_backup_ssh_folder 
+    tags:
+      - Rest-SrvBackup
+
+  - name: Create .ssh
+    ansible.builtin.shell:
+      cmd: mkdir /home/borg/.ssh && chown borg:borg /home/borg/.ssh && chmod 700 /home/borg/.ssh  
+    when: not check_backup_ssh_folder.stat.exists
+    tags:
+      - Rest-SrvBackup
+
+  - name: Copy authorized_keys
+    ansible.builtin.copy:
+      src: ./files/backup/SrvLog/root/.ssh/id_rsa.pub
+      dest: /home/borg/.ssh/authorized_keys
+      owner: borg
+      mode: 0600
+    tags:
+      - Rest-SrvBackup
+      - Rest-SrvLog
+
+  - name: Check folders for backup script
+    ansible.builtin.stat:
+      path: /root/scripts
+    register: check_script_folder
+    tags:
+      - Rest-SrvBackup
+
+  - name: Print execution check_script_folder
+    ansible.builtin.debug:
+      var: check_script_folder
+    tags:
+      - Rest-SrvBackup
+
+  - name: Create folders for scripts
+    ansible.builtin.shell:
+      cmd: mkdir /root/scripts
+    when: not check_script_folder.stat.exists
+    tags:
+      - Rest-SrvBackup
+
+  - name: Copy script borg-backup.sh
+    ansible.builtin.copy:
+      src: ./files/backup/borg-backup.sh
+      dest: /root/scripts/borg-backup.sh
+      owner: root
+      mode: 0770
+    tags:
+      - Rest-SrvBackup
+
+  - name: Create job in cron for Borg backup
+    ansible.builtin.cron:
+      name: "Borg backup"
+      minute: "*/5"
+      hour: "*"
+      day: "*"
+      month: "*"
+      weekday: "*"
+      job: "/root/scripts/borg-backup.sh"
+    tags:
+      - Rest-SrvBackup
+
+  - name: Barman switch-wal srvdb
     become_user: barman
     ansible.builtin.shell:
-      cmd: barman switch-wal master
+      cmd: barman switch-wal srvdb
+    tags:
+      - Rest-SrvBackup
+      - Rest-SrvDB
 
   - name: Barman cron
     become_user: barman
     ansible.builtin.shell:
       cmd: barman cron
+    tags:
+      - Rest-SrvBackup
+      - Rest-SrvDB
+
+  - name: Creates a cron job
+    ansible.builtin.cron:
+      name: Cron barman backup
+      minute: "0"
+      hour: "*"
+      day: "*"
+      month: "*"
+      weekday: "*"
+      user: barman
+      job: "barman backup srvdb --wait"
+    tags:
+      - Rest-SrvBackup
+
+#
+# End play for start backup
+#

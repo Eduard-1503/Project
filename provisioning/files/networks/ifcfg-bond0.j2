@@ -1,0 +1,15 @@
+DEVICE=bond0
+NAME=bond0
+# Type interface bond
+TYPE=Bond
+BONDING_MASTER=yes
+# Set IP address
+IPADDR={{ bond_ip }}
+# Subnet mask
+NETMASK=255.255.255.252
+ONBOOT=yes
+BOOTPROTO=static
+# Bond operation mode - Active-Backup
+# fail_over_mac=1 - this settings allows to be disabled one interface
+BONDING_OPTS="mode=1 miimon=100 fail_over_mac=1"
+NM_CONTROLLED=yes
