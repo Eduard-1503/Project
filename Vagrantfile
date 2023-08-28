@@ -53,7 +53,7 @@ Vagrant.configure("2") do |config|
     # Change VM
     srv.vm.provider :virtualbox do |vb|
     # Change memory size
-      vb.memory = '1024'
+      vb.memory = '512'
     # Change memory size      
     #  vb.cpus = '1'
     end
@@ -104,7 +104,7 @@ Vagrant.configure("2") do |config|
     # Change VM
     srv.vm.provider :virtualbox do |vb|
     # Change memory size
-      vb.memory = '1024'
+      vb.memory = '512'
     # Change memory size      
     #  vb.cpus = '1'
     end
@@ -122,6 +122,23 @@ Vagrant.configure("2") do |config|
     srv.vm.provider :virtualbox do |vb|
     # Change memory size
       vb.memory = '512'
+    # Change memory size      
+    #  vb.cpus = '1'
+    end
+  end
+end
+
+Vagrant.configure("2") do |config|
+  config.vm.define "SrvApp" do |srv|
+    srv.vm.box = 'centos/stream8'
+    srv.vm.host_name = 'SrvApp'
+    # Add networks
+    srv.vm.network :private_network, ip: '192.168.1.5', adapter: 2, netmask: "255.255.255.248", virtualbox__intnet: 'hw-net'
+    srv.vm.network :private_network, ip: '192.168.56.80', adapter: 8
+    # Change VM
+    srv.vm.provider :virtualbox do |vb|
+    # Change memory size
+      vb.memory = '2048'
     # Change memory size      
     #  vb.cpus = '1'
     end

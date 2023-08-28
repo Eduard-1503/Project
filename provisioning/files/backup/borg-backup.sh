@@ -2,7 +2,7 @@
 # clear
 # set -x
 
-# Script for backup folders "/ets" using Borg
+# Script for backup folders "/var/log/rsyslog" using Borg
 
 # Create VARS
 Backup="/bin/borg create --stats --progress "
@@ -11,12 +11,11 @@ Pr="/bin/borg prune  -v --list "
 Date_B=`date '+%Y-%m-%d_%H:%M:%S'`
 Date_L=`date '+%Y-%m-%d'`
 Time_L=`date '+%H:%M:%S'`
-Data="::etc-$Date_B "
-Repos="borg@192.168.0.10:/var/backup/SrvLog/"
+Data="::rsyslog-$Date_B "
+Repos="borg@192.168.0.10:/var/backup/SrvLog"
 Target="/var/log/rsyslog"
 Log="/var/log/borg_backup.log"
 Comp="/bin/borg compact "
-
 
 
 # Create backup
